@@ -23,6 +23,7 @@ const LoginForm = () => {
             if (response.data.success) {
                 alert("Login successful");
                 localStorage.setItem('userId', response.data.userId);
+                localStorage.setItem('username', response.data.name);
                 window.location.href = '/dashboard';
             } else {
                 alert(response.data.message);

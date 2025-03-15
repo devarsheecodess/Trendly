@@ -2,6 +2,7 @@ import { LogOut } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
+import SidebarPic from '../../assets/sidebar.png'
 
 const Sidebar = () => {
     const [isMobile, setIsMobile] = useState(false);
@@ -73,14 +74,7 @@ const Sidebar = () => {
                 className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} fixed top-0 left-0 h-full bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-40 flex flex-col ${isMobile ? 'w-64' : 'w-64'}`}
             >
                 {/* Logo Area */}
-                <div className="h-20 flex items-center px-4 border-b border-stone-200">
-                    <div className="bg-stone-800 h-10 w-10 rounded-lg flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                        </svg>
-                    </div>
-                    <h1 className="ml-3 font-bold text-xl text-stone-800">Trendly</h1>
-                </div>
+                <img src={SidebarPic} alt="Sidebar" className="w-full h-15 mt-3 object-contain" />
 
                 {/* Navigation */}
                 <nav className="flex-1 px-2 py-4 overflow-y-auto">
@@ -107,17 +101,16 @@ const Sidebar = () => {
                             )}
                         </NavLink>
                     ))}
-                </nav>
 
-                {/* Logout Button */}
-                <div className="p-4 border-stone-200 hover:bg-stone-100">
-                    <a onClick={handleLogout} className="flex items-center space-x-3">
-                        <LogOut size={22} className='text-red-800' />
-                        <div>
-                            <div className="text-lg font-medium text-red-800">Logout</div>
-                        </div>
-                    </a>
-                </div>
+                    {/* Logout Button - Made consistent with other menu items */}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full mb-1 flex items-center px-4 py-3 text-red-800 hover:bg-stone-100 rounded-md transition-colors duration-200 relative"
+                    >
+                        <LogOut className="h-5 w-5" />
+                        <span className="ml-3">Logout</span>
+                    </button>
+                </nav>
 
                 {/* User Profile */}
                 <div className="p-4 border-t border-stone-200">
