@@ -12,7 +12,15 @@ import Landing from './components/external/Landing'
 import Footer from './components/external/Footer'
 import Auth from './components/auth/Auth'
 
+import Sidebar from './components/internal/Sidebar'
 import Dashboard from './components/internal/Dashboard'
+import Onbording from './components/internal/Onbording'
+import ScriptWritting from './components/internal/ScriptWritting'
+import VoiceOver from './components/internal/VoiceOver'
+import Thumbnail from './components/internal/Thumbnail'
+import SEO from './components/internal/SEO'
+import Post from './components/internal/Post'
+import Profile from './components/internal/Profile'
 
 const router = createBrowserRouter([
   {
@@ -36,11 +44,60 @@ const router = createBrowserRouter([
     </div>
   },
   {
+    path: '/onbording',
+    element: <div>
+      <Onbording />
+    </div>
+  },
+  {
     path: '/dashboard',
     element: <div>
+      <Sidebar />
       <Dashboard />
     </div>
-  }
+  },
+  {
+    path: '/script',
+    element: <div>
+      <Sidebar />
+      <ScriptWritting />
+    </div>
+  },
+  {
+    path: '/voiceover',
+    element: <div>
+      <Sidebar />
+      <VoiceOver />
+    </div>
+  },
+  {
+    path: '/thumbnail',
+    element: <div>
+      <Sidebar />
+      <Thumbnail />
+    </div>
+  },
+  {
+    path: '/seo',
+    element: <div>
+      <Sidebar />
+      <SEO />
+    </div>
+  },
+  {
+    path: '/post',
+    element: <div>
+      <Sidebar />
+      <Post />
+    </div>
+  },
+  {
+    path: '/profile',
+    element: <div>
+      <Sidebar />
+      <Profile />
+    </div>
+  },
 ])
 
 
