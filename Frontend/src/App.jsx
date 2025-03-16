@@ -21,6 +21,7 @@ import Thumbnail from './components/internal/Thumbnail'
 import SEO from './components/internal/SEO'
 import Post from './components/internal/Post'
 import Profile from './components/internal/Profile'
+import History from './components/internal/History'
 
 const router = createBrowserRouter([
   {
@@ -96,6 +97,13 @@ const router = createBrowserRouter([
     element: <div>
       <Sidebar />
       <Profile />
+    </div>
+  },
+  {
+    path: '/history',
+    element: <div>
+      <Sidebar />
+      <History />
     </div>
   },
 ])

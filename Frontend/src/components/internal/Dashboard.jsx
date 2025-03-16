@@ -7,6 +7,8 @@ const Dashboard = () => {
     const [isMobile, setIsMobile] = useState(false);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+    const [avatar, setAvatar] = useState('');
+
     function getCookieValue(cookieName) {
         console.log(2);
         const cookies = document.cookie.split("; ");
@@ -14,8 +16,22 @@ const Dashboard = () => {
         return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
     }
 
+    const fetchAvatar = async (id) => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/auth/avatar?userId=${id}`);
+            if (response.data.success) {
+                localStorage.setItem('avatar', response.data.avatar);
+            } else {
+                localStorage.setItem('avatar', 'https://t3.ftcdn.net/jpg/05/16/27/58/360_F_516275801_f3Fsp17x6HQK0xQgDQEELoTuERO4SsWV.jpg');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     useEffect(() => {
         if (google && !id) {
+            fetchAvatar(getCookieValue("userId"));
             const userId = getCookieValue("userId");
             localStorage.setItem('userId', userId);
             const username = getCookieValue("userName");

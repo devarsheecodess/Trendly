@@ -1,19 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Onboarding = () => {
     const [formStep, setFormStep] = useState(1);
     const totalSteps = 3;
 
     const [profileImage, setProfileImage] = useState(null);
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
-    const handleImageChange = (e) => {
-        if (e.target.files[0]) {
-            setProfileImage(URL.createObjectURL(e.target.files[0]));
-        }
+    const [formData, setFormData] = useState({
+        userId: localStorage.getItem('userId'),
+        avatar: '',
+        channelName: '',
+        about: '',
+        subscribers: '',
+        contentType: '',
+        contentNiche: [],
+        ageGroups: [],
+        audienceInterests: [],
+        audienceDetails: ''
+    });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCheckboxChange = (e) => {
+        const { name, value, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
+                ? [...prev[name], value]  // Add value if checked
+                : prev[name].filter(item => item !== value) // Remove if unchecked
+        }));
     };
 
     const nextStep = () => setFormStep(prev => Math.min(prev + 1, totalSteps));
     const prevStep = () => setFormStep(prev => Math.max(prev - 1, 1));
+
+    const handleSubmit = async () => {
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append("image", formData.avatar);
+
+            const image = await axios.post(`${BACKEND_URL}/upload/store`, formDataToSend, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+
+            const updatedFormData = { ...formData, avatar: image.data.url };
+            setFormData(updatedFormData);
+            console.log(updatedFormData);
+
+            await axios.post(`${BACKEND_URL}/auth/onboarding`, updatedFormData);
+            alert("Welcome onboard!");
+        } catch (err) {
+            console.log("Upload error:", err);
+        }
+    };
+
+
+    const checkOnboardingStatus = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/auth/onboarding?userId=${localStorage.getItem('userId')}`);
+            if (response.data.onboarding) {
+                window.location.href = '/dashboard';
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setFormData(prev => ({ ...prev, avatar: file }));
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            setProfileImage(event.target.result);
+        };
+    };
+
+    useEffect(() => {
+        checkOnboardingStatus();
+    }, [])
 
     return (
         <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
@@ -57,10 +129,9 @@ const Onboarding = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         <input
-                                            id="profile-upload"
                                             type="file"
+                                            name="avatar"
                                             accept="image/*"
-                                            className="hidden"
                                             onChange={handleImageChange}
                                         />
                                     </label>
@@ -75,6 +146,9 @@ const Onboarding = () => {
                                                 id="name"
                                                 className="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none"
                                                 placeholder="Your channel name"
+                                                name='channelName'
+                                                value={formData.channelName}
+                                                onChange={handleChange}
                                             />
                                         </div>
 
@@ -82,6 +156,9 @@ const Onboarding = () => {
                                             <label htmlFor="about" className="block text-sm font-medium text-stone-700 mb-1">Tell Us About Yourself</label>
                                             <textarea
                                                 id="about"
+                                                name='about'
+                                                value={formData.about}
+                                                onChange={handleChange}
                                                 rows={4}
                                                 className="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none resize-none"
                                                 placeholder="Share a brief description about yourself and your content..."
@@ -102,6 +179,9 @@ const Onboarding = () => {
                                     <label htmlFor="subscribers" className="block text-sm font-medium text-stone-700 mb-1">Subscribers Count</label>
                                     <select
                                         id="subscribers"
+                                        name='subscribers'
+                                        value={formData.subscribers}
+                                        onChange={handleChange}
                                         className="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none appearance-none bg-white"
                                     >
                                         <option value="">Select subscriber range</option>
@@ -117,6 +197,9 @@ const Onboarding = () => {
                                     <label htmlFor="contentType" className="block text-sm font-medium text-stone-700 mb-1">Type of Creator</label>
                                     <select
                                         id="contentType"
+                                        name='contentType'
+                                        value={formData.contentType}
+                                        onChange={handleChange}
                                         className="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none appearance-none bg-white"
                                     >
                                         <option value="">Select content type</option>
@@ -132,7 +215,14 @@ const Onboarding = () => {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         {['Gaming', 'Education', 'Lifestyle', 'Beauty', 'Tech', 'Fitness', 'Food', 'Travel', 'Music', 'Comedy', 'Business', 'Arts & Crafts'].map((niche) => (
                                             <label key={niche} className="flex items-center p-3 border border-stone-200 rounded-md cursor-pointer hover:bg-stone-50">
-                                                <input type="checkbox" className="h-4 w-4 text-stone-600 focus:ring-stone-500 border-stone-300 rounded" />
+                                                <input
+                                                    name='contentNiche'
+                                                    value={niche}
+                                                    checked={formData.contentNiche.includes(niche)}
+                                                    onChange={handleCheckboxChange}
+                                                    type="checkbox"
+                                                    className="h-4 w-4 text-stone-600 focus:ring-stone-500 border-stone-300 rounded"
+                                                />
                                                 <span className="ml-2 text-stone-700">{niche}</span>
                                             </label>
                                         ))}
@@ -148,11 +238,11 @@ const Onboarding = () => {
 
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Age Groups (Select all that apply)</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Age Groups</label>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {['Under 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'].map((age) => (
+                                        {['Under 18', '18-24', '25-34'].map((age) => (
                                             <label key={age} className="flex items-center p-3 border border-stone-200 rounded-md cursor-pointer hover:bg-stone-50">
-                                                <input type="checkbox" className="h-4 w-4 text-stone-600 focus:ring-stone-500 border-stone-300 rounded" />
+                                                <input name='ageGroups' value={age} checked={formData.ageGroups.includes(age)} onChange={handleCheckboxChange} type="checkbox" className="h-4 w-4 text-stone-600 focus:ring-stone-500 border-stone-300 rounded" />
                                                 <span className="ml-2 text-stone-700">{age}</span>
                                             </label>
                                         ))}
@@ -162,9 +252,9 @@ const Onboarding = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Audience Interests</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {['Technology', 'Science', 'Arts', 'Sports', 'Fashion', 'Health', 'Finance', 'Entertainment', 'Education', 'DIY', 'Nature', 'Politics'].map((interest) => (
+                                        {['Technology', 'Science', 'Arts'].map((interest) => (
                                             <label key={interest} className="inline-flex items-center px-3 py-1.5 border border-stone-200 rounded-full cursor-pointer hover:bg-stone-50">
-                                                <input type="checkbox" className="h-3.5 w-3.5 text-stone-600 focus:ring-stone-500 border-stone-300 rounded" />
+                                                <input name='audienceInterests' value={interest} checked={formData.audienceInterests.includes(interest)} onChange={handleCheckboxChange} type="checkbox" className="h-3.5 w-3.5 text-stone-600 focus:ring-stone-500 border-stone-300 rounded" />
                                                 <span className="ml-2 text-sm text-stone-700">{interest}</span>
                                             </label>
                                         ))}
@@ -175,6 +265,9 @@ const Onboarding = () => {
                                     <label htmlFor="audience-notes" className="block text-sm font-medium text-stone-700 mb-1">Additional Audience Details</label>
                                     <textarea
                                         id="audience-notes"
+                                        name='audienceDetails'
+                                        value={formData.audienceDetails}
+                                        onChange={handleChange}
                                         rows={3}
                                         className="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none resize-none"
                                         placeholder="Share any additional details about your target audience..."
@@ -204,7 +297,7 @@ const Onboarding = () => {
                             </button>
 
                             <button
-                                onClick={formStep < totalSteps ? nextStep : () => { }}
+                                onClick={formStep < totalSteps ? nextStep : handleSubmit}
                                 className="px-5 py-2.5 rounded-md bg-stone-800 text-white font-medium hover:bg-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-500"
                             >
                                 {formStep < totalSteps ? 'Continue' : 'Complete Setup'}

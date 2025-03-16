@@ -8,6 +8,7 @@ router.get("/", (req, res) => {
 
 // Import Models
 const User = require("../models/UserModel");
+const Onboarding = require("../models/OnbordingModel");
 
 const app = express();
 // Middleware for JSON handling
@@ -68,4 +69,45 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Onboarding user
+router.post("/onboarding", async (req, res) => {
+  const data = req.body;
+  try {
+    const newOnboarding = new Onboarding(data);
+    await newOnboarding.save();
+    res.status(201).send({ success: true });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+// Check if user is onboarded
+router.get("/onboarding", async (req, res) => {
+  const userId = req.query.userId;
+  try {
+    const user = await Onboarding.findOne({ userId: userId });
+    if (user) {
+      res.status(200).send({ success: true, onboarding: true });
+    } else {
+      res.status(200).send({ success: true, onboarding: false });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+// Fetch avatar
+router.get("/avatar", async (req, res) => {
+  const userId = req.query.userId;
+  try {
+    const user = await Onboarding.findOne({ userId: userId });
+    if (user) {
+      res.status(200).send({ success: true, avatar: user.avatar });
+    } else {
+      res.status(200).send({ success: false, avatar: "" });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
 module.exports = router;

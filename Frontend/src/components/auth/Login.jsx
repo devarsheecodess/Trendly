@@ -16,12 +16,26 @@ const LoginForm = () => {
         });
     }
 
+    const fetchAvatar = async (id) => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/auth/avatar?userId=${id}`);
+            if (response.data.success) {
+                localStorage.setItem('avatar', response.data.avatar);
+            } else {
+                localStorage.setItem('avatar', 'https://t3.ftcdn.net/jpg/05/16/27/58/360_F_516275801_f3Fsp17x6HQK0xQgDQEELoTuERO4SsWV.jpg');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const response = await axios.post(`${BACKEND_URL}/auth/login`, formData);
             if (response.data.success) {
                 alert("Login successful");
+                await fetchAvatar(response.data.userId);
                 localStorage.setItem('userId', response.data.userId);
                 localStorage.setItem('username', response.data.name);
                 window.location.href = '/dashboard';

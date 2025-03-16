@@ -1,10 +1,10 @@
-import express from "express";
-import cloudinary from "../cloudinaryConfig.js";
-import upload from "../multerConfig.js";
+const express = require("express");
+const cloudinary = require("../config/cloudinaryConfig.js");
+const upload = require("../config/multerConfig.js");
 
 const router = express.Router();
 
-router.post("/upload", upload.single("image"), async (req, res) => {
+router.post("/store", upload.single("image"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path);
     res.json({ url: result.secure_url });
@@ -13,4 +13,4 @@ router.post("/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

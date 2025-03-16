@@ -10,6 +10,7 @@ const Sidebar = () => {
     const [google, setGoogle] = useState(localStorage.getItem('google'));
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
     const [username, setUsername] = useState(localStorage.getItem('username'));
+    const [avatar, setAvatar] = useState(localStorage.getItem('avatar'));
 
     // Check if screen is mobile size
     useEffect(() => {
@@ -52,6 +53,7 @@ const Sidebar = () => {
         { id: 3, name: 'Thumbnail', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', path: '/thumbnail' },
         { id: 4, name: 'SEO Analyzer', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', path: '/seo' },
         { id: 5, name: 'Post', icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8', path: '/post' },
+        { id: 6, name: 'History', icon: 'M12 8v4l3 3m6-3A9 9 0 1 1 12 3a9 9 0 0 1 9 9z', path: '/history' }
     ];
 
     return (
@@ -73,8 +75,10 @@ const Sidebar = () => {
             <div
                 className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} fixed top-0 left-0 h-full bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-40 flex flex-col ${isMobile ? 'w-64' : 'w-64'}`}
             >
-                {/* Logo Area */}
-                <img src={SidebarPic} alt="Sidebar" className="w-full h-15 mt-3 object-contain" />
+                <div className='flex items-center justify-between px-4 py-3 border-b border-stone-200'>
+                    {/* Logo Area */}
+                    <img src={SidebarPic} alt="Sidebar" className="w-full h-15 mt-3 object-contain" />
+                </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 px-2 py-4 overflow-y-auto">
@@ -115,11 +119,8 @@ const Sidebar = () => {
                 {/* User Profile */}
                 <div className="p-4 border-t border-stone-200">
                     <a href="profile" className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-full bg-stone-300 flex items-center justify-center overflow-hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
+                        <img src={avatar} className="h-8 w-8 rounded-full bg-stone-300 flex items-center justify-center overflow-hidden">
+                        </img>
                         <div>
                             <div className="text-sm font-medium text-stone-700">{username}</div>
                             <div className="text-xs text-stone-500">Creator</div>
