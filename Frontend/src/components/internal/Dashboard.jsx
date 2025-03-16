@@ -30,8 +30,8 @@ const Dashboard = () => {
     }
 
     useEffect(() => {
+        fetchAvatar(getCookieValue("userId"));
         if (google && !id) {
-            fetchAvatar(getCookieValue("userId"));
             const userId = getCookieValue("userId");
             localStorage.setItem('userId', userId);
             const username = getCookieValue("userName");

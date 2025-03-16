@@ -54,6 +54,7 @@ const Onboarding = () => {
 
             await axios.post(`${BACKEND_URL}/auth/onboarding`, updatedFormData);
             alert("Welcome onboard!");
+            window.location.href = '/dashboard';
         } catch (err) {
             console.log("Upload error:", err);
         }
@@ -129,9 +130,11 @@ const Onboarding = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         <input
+                                            id="profile-upload"
                                             type="file"
-                                            name="avatar"
                                             accept="image/*"
+                                            className="hidden"
+                                            name='avatar'
                                             onChange={handleImageChange}
                                         />
                                     </label>

@@ -12,6 +12,7 @@ const PromptRoute = require("./routes/mainRoutes/PromptRoute");
 const ThumbnailRoute = require("./routes/mainRoutes/ThumbnailRoute");
 const SEORoute = require("./routes/mainRoutes/SEORoute");
 const UploadRoute = require("./routes/UploadRoute");
+const UserRoutes = require("./routes/UserRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use("/prompt", PromptRoute);
 app.use("/thumbnail", ThumbnailRoute);
 app.use("/seo", SEORoute);
 app.use("/upload", UploadRoute);
+app.use("/user", UserRoutes);
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {
