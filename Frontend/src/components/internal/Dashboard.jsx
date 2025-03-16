@@ -22,7 +22,7 @@ const Dashboard = () => {
             if (response.data.success) {
                 localStorage.setItem('avatar', response.data.avatar);
             } else {
-                localStorage.setItem('avatar', 'https://t3.ftcdn.net/jpg/05/16/27/58/360_F_516275801_f3Fsp17x6HQK0xQgDQEELoTuERO4SsWV.jpg');
+                localStorage.setItem('avatar', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLMI5YxZE03Vnj-s-sth2_JxlPd30Zy7yEGg&s');
             }
         } catch (err) {
             console.error(err);
