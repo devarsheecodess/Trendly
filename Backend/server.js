@@ -8,6 +8,9 @@ const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/AuthRoutes");
 const googleAuthRoutes = require("./routes/GoogleAuth");
 const ScriptRoute = require("./routes/mainRoutes/ScriptRoute");
+const PromptRoute = require("./routes/mainRoutes/PromptRoute");
+const ThumbnailRoute = require("./routes/mainRoutes/ThumbnailRoute");
+const SEORoute = require("./routes/mainRoutes/SEORoute");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +28,9 @@ app.use(passport.initialize());
 app.use("/auth", authRoutes);
 app.use("/oauth", googleAuthRoutes); // Improved route structure
 app.use("/script", ScriptRoute);
+app.use("/prompt", PromptRoute);
+app.use("/thumbnail", ThumbnailRoute);
+app.use("/seo", SEORoute);
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {

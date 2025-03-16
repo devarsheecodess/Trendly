@@ -1,27 +1,280 @@
 import React, { useState } from 'react';
-import { Search, ArrowRight, RefreshCw, Check, X, ThumbsUp, AlertCircle } from 'lucide-react';
+import { Search, ArrowRight, RefreshCw, Check, X, ThumbsUp, AlertCircle, Sparkles } from 'lucide-react';
+import axios from 'axios';
 
 const SEO = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [briefValue, setBriefValue] = useState('');
     const [titleValue, setTitleValue] = useState('');
+    const [titleScore, setTitleScore] = useState(0);
+    const [optimizedTitle, setOptimizedTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [hashtags, setHashtags] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [strengthPoints, setStrengthPoints] = useState([]);
+    const [opportunityPoints, setOpportunityPoints] = useState([]);
+    const [weaknessPoints, setWeaknessPoints] = useState([]);
+    const [primaryKeywords, setPrimaryKeywords] = useState([]);
+    const [longTailKeywords, setLongTailKeywords] = useState([]);
+    const [optimalVideoLength, setOptimalVideoLength] = useState('');
+    const [bestPublishingTime, setBestPublishingTime] = useState('');
+    const [thumbnailStyle, setThumbnailStyle] = useState('');
+    const [engagementHooks, setEngagementHooks] = useState('');
+    const [SEOData, setSEOData] = useState({});
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-    const handleSubmit = (e) => {
+    // Process the API response
+    const processAnalysisResponse = (responseText) => {
+        try {
+            // First, try to parse the responseText as JSON
+            let jsonData;
+            try {
+                jsonData = JSON.parse(responseText);
+                responseText = jsonData.response || responseText;
+            } catch (e) {
+                // If parsing fails, use the responseText as is
+                console.log("Response is not valid JSON, using as text");
+            }
+
+            // Extract values into local variables first
+            let extractedTitleScore;
+            let extractedOptimizedTitle;
+            let extractedDescription;
+            let extractedHashtags = [];
+            let extractedTags = [];
+            let extractedStrengthPoints = [];
+            let extractedOpportunityPoints = [];
+            let extractedWeaknessPoints = [];
+            let extractedPrimaryKeywords = [];
+            let extractedLongTailKeywords = [];
+            let extractedOptimalVideoLength;
+            let extractedBestPublishingTime;
+            let extractedThumbnailStyle;
+            let extractedEngagementHooks;
+
+            // Extract title score
+            const scoreMatch = responseText.match(/Score: (\d+)/);
+            if (scoreMatch) {
+                extractedTitleScore = parseInt(scoreMatch[1]);
+                setTitleScore(extractedTitleScore);
+            }
+
+            // Extract optimized title
+            const optimizedTitleMatch = responseText.match(/Optimized Title Suggestion: ['"](.+?)['"]/);
+            if (optimizedTitleMatch) {
+                extractedOptimizedTitle = optimizedTitleMatch[1];
+                setOptimizedTitle(extractedOptimizedTitle);
+            }
+
+            // Extract description
+            const descriptionMatch = responseText.match(/Generated Description:([\s\S]*?)(?=Recommended Hashtags:|$)/);
+            if (descriptionMatch) {
+                extractedDescription = descriptionMatch[1].trim();
+                setDescription(extractedDescription);
+            }
+
+            // Extract hashtags
+            const hashtagsMatch = responseText.match(/Recommended Hashtags:([\s\S]*?)(?=Recommended Tags:|$)/);
+            if (hashtagsMatch) {
+                const hashtagText = hashtagsMatch[1].trim();
+                extractedHashtags = hashtagText.split(/\s+/).filter(tag => tag.startsWith('#'));
+                setHashtags(extractedHashtags);
+            }
+
+            // Extract tags
+            const tagsMatch = responseText.match(/Recommended Tags:([\s\S]*?)(?=Content Improvement Suggestions:|$)/);
+            if (tagsMatch) {
+                const tagsText = tagsMatch[1].trim();
+                extractedTags = tagsText.split(',').map(tag => tag.trim());
+                setTags(extractedTags);
+            }
+
+            // Extract improvement suggestions
+            const improvementMatch = responseText.match(/Content Improvement Suggestions:([\s\S]*?)(?=Keyword Analysis:|$)/);
+            if (improvementMatch) {
+                const improvementText = improvementMatch[1].trim();
+                extractedStrengthPoints = improvementText.split('\n').filter(line => line.includes('✓')).map(line => line.replace('✓', '').trim());
+                extractedOpportunityPoints = improvementText.split('\n').filter(line => line.includes('⚠')).map(line => line.replace('⚠', '').trim());
+                extractedWeaknessPoints = improvementText.split('\n').filter(line => line.includes('✗')).map(line => line.replace('✗', '').trim());
+
+                setStrengthPoints(extractedStrengthPoints);
+                setOpportunityPoints(extractedOpportunityPoints);
+                setWeaknessPoints(extractedWeaknessPoints);
+            }
+
+            // Extract primary keywords
+            const keywordMatch = responseText.match(/Primary Keywords:([\s\S]*?)(?=Long-tail Opportunities:|$)/);
+            if (keywordMatch) {
+                const keywordText = keywordMatch[1].trim();
+                extractedPrimaryKeywords = keywordText.split('\n').map(line => {
+                    const match = line.match(/- (.+?) - Volume: (.+?), Difficulty: (.+)/);
+                    if (match) {
+                        return {
+                            keyword: match[1],
+                            volume: match[2],
+                            difficulty: match[3]
+                        };
+                    }
+                    return null;
+                }).filter(Boolean);
+                setPrimaryKeywords(extractedPrimaryKeywords);
+            }
+
+            // Extract long-tail keywords
+            const longTailMatch = responseText.match(/Long-tail Opportunities:([\s\S]*?)(?=Competitive Analysis:|$)/);
+            if (longTailMatch) {
+                const longTailText = longTailMatch[1].trim();
+                extractedLongTailKeywords = longTailText.split('\n').map(line => line.replace('-', '').trim());
+                setLongTailKeywords(extractedLongTailKeywords);
+            }
+
+            // Extract competitive analysis
+            const competitiveMatch = responseText.match(/Competitive Analysis:([\s\S]*?)(?=$)/);
+            if (competitiveMatch) {
+                const competitiveText = competitiveMatch[1].trim();
+
+                const videoLengthMatch = competitiveText.match(/Optimal Video Length: (.+?)(?=\n|$)/);
+                if (videoLengthMatch) {
+                    extractedOptimalVideoLength = videoLengthMatch[1];
+                    setOptimalVideoLength(extractedOptimalVideoLength);
+                }
+
+                const publishTimeMatch = competitiveText.match(/Best Publishing Time: (.+?)(?=\n|$)/);
+                if (publishTimeMatch) {
+                    extractedBestPublishingTime = publishTimeMatch[1];
+                    setBestPublishingTime(extractedBestPublishingTime);
+                }
+
+                const thumbnailMatch = competitiveText.match(/Thumbnail Style: (.+?)(?=\n|$)/);
+                if (thumbnailMatch) {
+                    extractedThumbnailStyle = thumbnailMatch[1];
+                    setThumbnailStyle(extractedThumbnailStyle);
+                }
+
+                const hooksMatch = competitiveText.match(/Engagement Hooks: (.+?)(?=\n|$)/);
+                if (hooksMatch) {
+                    extractedEngagementHooks = hooksMatch[1];
+                    setEngagementHooks(extractedEngagementHooks);
+                }
+            }
+
+            setShowResults(true);
+            setIsAnalyzing(false);
+
+            // Combine all the extracted data in a single object to export
+            setSEOData({
+                titleScore: extractedTitleScore,
+                optimizedTitle: extractedOptimizedTitle,
+                description: extractedDescription,
+                hashtags: extractedHashtags,
+                tags: extractedTags,
+                strengthPoints: extractedStrengthPoints,
+                opportunityPoints: extractedOpportunityPoints,
+                weaknessPoints: extractedWeaknessPoints,
+                primaryKeywords: extractedPrimaryKeywords,
+                longTailKeywords: extractedLongTailKeywords,
+                optimalVideoLength: extractedOptimalVideoLength,
+                bestPublishingTime: extractedBestPublishingTime,
+                thumbnailStyle: extractedThumbnailStyle,
+                engagementHooks: extractedEngagementHooks
+            })
+        } catch (error) {
+            console.error("Error processing response:", error);
+            setShowResults(true);
+            setIsAnalyzing(false);
+            return {}; // Return an empty object in case of error
+        }
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsAnalyzing(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsAnalyzing(false);
+        try {
+            const prompt = `Generate a comprehensive SEO analysis for a video about ${briefValue} with the title ${titleValue}. \n\nFormat your response as a JSON string with this structure:\n{\n  \"response\": \"\n    Title Analysis:\n    - Score: [score between 1-100]\n    - Original Title: '${titleValue}'\n    - Optimized Title Suggestion: '[improved title]'\n    - Rating: [Excellent/Moderate/Needs Improvement]\n\n    Generated Description:\n    [compelling 2-paragraph description with benefits and value proposition]\n\n    Recommended Hashtags:\n    [5-6 relevant hashtags starting with #]\n\n    Recommended Tags:\n    [10 relevant tags separated by commas]\n\n    Content Improvement Suggestions:\n    ✓ [strength point 1]\n    ✓ [strength point 2]\n    ⚠ [opportunity point]\n    ✗ [weakness point]\n\n    Keyword Analysis:\n    Primary Keywords:\n    - [keyword 1] - Volume: [High/Medium/Low], Difficulty: [High/Medium/Low]\n    - [keyword 2] - Volume: [High/Medium/Low], Difficulty: [High/Medium/Low]\n    - [keyword 3] - Volume: [High/Medium/Low], Difficulty: [High/Medium/Low]\n    - [keyword 4] - Volume: [High/Medium/Low], Difficulty: [High/Medium/Low]\n\n    Long-tail Opportunities:\n    - [long-tail keyword 1]\n    - [long-tail keyword 2]\n    - [long-tail keyword 3]\n    - [long-tail keyword 4]\n\n    Competitive Analysis:\n    - Optimal Video Length: [length recommendation]\n    - Best Publishing Time: [day and time recommendation]\n    - Thumbnail Style: [specific thumbnail advice]\n    - Engagement Hooks: [engagement strategy recommendation]\n  \"\n}`;
+
+
+            const response = await axios.post(`${BACKEND_URL}/seo/analyze`, {
+                prompt,
+                format: "json",
+                responseStructure: {
+                    titleAnalysis: {
+                        score: "number between 1-100",
+                        originalTitle: titleValue,
+                        optimizedTitle: "improved title suggestion",
+                        rating: "Excellent/Moderate/Needs Improvement"
+                    },
+                    description: "compelling 2-paragraph description",
+                    hashtags: "5-6 relevant hashtags starting with #",
+                    tags: "10 relevant tags separated by commas",
+                    improvementSuggestions: {
+                        strengths: ["strength point 1", "strength point 2"],
+                        opportunities: ["opportunity point"],
+                        weaknesses: ["weakness point"]
+                    },
+                    keywordAnalysis: {
+                        primaryKeywords: [
+                            { keyword: "keyword 1", volume: "High/Medium/Low", difficulty: "High/Medium/Low" },
+                            { keyword: "keyword 2", volume: "High/Medium/Low", difficulty: "High/Medium/Low" }
+                        ],
+                        longTailKeywords: ["long-tail keyword 1", "long-tail keyword 2"]
+                    },
+                    competitiveAnalysis: {
+                        optimalVideoLength: "length recommendation",
+                        bestPublishingTime: "day and time recommendation",
+                        thumbnailStyle: "specific thumbnail advice",
+                        engagementHooks: "engagement strategy recommendation"
+                    }
+                }
+            });
+            processAnalysisResponse(response.data.response);
+        } catch (err) {
+            console.error("API Error:", err);
             setShowResults(true);
-        }, 3000);
+            setIsAnalyzing(false);
+        }
     };
 
     const resetForm = () => {
         setBriefValue('');
         setTitleValue('');
         setShowResults(false);
+        setTitleScore(0);
+        setOptimizedTitle('');
+        setDescription('');
+        setHashtags([]);
+        setTags([]);
+        setStrengthPoints([]);
+        setOpportunityPoints([]);
+        setWeaknessPoints([]);
+        setPrimaryKeywords([]);
+        setLongTailKeywords([]);
+        setOptimalVideoLength('');
+        setBestPublishingTime('');
+        setThumbnailStyle('');
+        setEngagementHooks('');
+    };
+
+    // Function to determine score color
+    const getScoreColor = (score) => {
+        if (score >= 80) return 'bg-green-600';
+        if (score >= 60) return 'bg-yellow-500';
+        return 'bg-red-500';
+    };
+
+    // Function to determine score text color
+    const getScoreTextColor = (score) => {
+        if (score >= 80) return 'bg-green-100 text-green-800';
+        if (score >= 60) return 'bg-yellow-100 text-yellow-800';
+        return 'bg-red-100 text-red-800';
+    };
+
+    // Function to get score label
+    const getScoreLabel = (score) => {
+        if (score >= 80) return 'Excellent';
+        if (score >= 60) return 'Moderate';
+        return 'Needs Improvement';
     };
 
     return (
@@ -70,14 +323,11 @@ const SEO = () => {
                             >
                                 {isAnalyzing ? (
                                     <>
-                                        <div className="loader-container">
-                                            <div className="loader">
-                                                <svg className="circular" viewBox="25 25 50 50">
-                                                    <circle className="path" cx="50" cy="50" r="20" fill="none" strokeWidth="4" strokeMiterlimit="10" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <span className="ml-2">Analyzing Content...</span>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Analyzing Content...</span>
                                     </>
                                 ) : (
                                     <>
@@ -101,23 +351,30 @@ const SEO = () => {
                                 <div className="mb-8">
                                     <div className="flex justify-between items-center mb-3">
                                         <h3 className="text-lg font-medium text-stone-800">Title Score</h3>
-                                        <div className="bg-stone-200 text-stone-800 font-medium px-3 py-1 rounded-full text-sm">
-                                            85/100
+                                        <div className={`font-medium px-3 py-1 rounded-full text-sm ${getScoreTextColor(titleScore)}`}>
+                                            {titleScore}/100 - {getScoreLabel(titleScore)}
                                         </div>
                                     </div>
 
                                     <div className="w-full bg-stone-200 rounded-full h-2.5">
-                                        <div className="bg-stone-600 h-2.5 rounded-full" style={{ width: '85%' }}></div>
+                                        <div className={`h-2.5 rounded-full ${getScoreColor(titleScore)}`} style={{ width: `${titleScore}%` }}></div>
                                     </div>
 
-                                    <div className="mt-4 p-4 bg-stone-200 rounded-lg border border-stone-300">
-                                        <h4 className="font-medium text-stone-800 mb-2">Original Title</h4>
-                                        <p className="text-stone-700">{titleValue}</p>
+                                    <div className="mt-4 md:mt-6 p-4 md:p-5 bg-gradient-to-br from-stone-50 to-stone-200 rounded-lg md:rounded-xl border border-stone-300 shadow-sm w-full max-w-full overflow-hidden">
+                                        <h4 className="font-semibold text-stone-800 mb-2 md:mb-3 text-base md:text-lg">Original Title</h4>
+                                        <p className="text-stone-700 font-medium text-sm md:text-base break-words">{titleValue}</p>
 
-                                        <div className="my-3 border-t border-stone-300"></div>
+                                        <div className="my-3 md:my-4 border-t border-stone-300"></div>
 
-                                        <h4 className="font-medium text-stone-800 mb-2">Optimized Title Suggestion</h4>
-                                        <p className="text-stone-700">How to Boost Your Website Traffic with SEO Tactics in 2025 | Step-by-Step Guide</p>
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-2 md:mb-3">
+                                            <h4 className="font-semibold text-stone-800 text-base md:text-lg">Optimized Title Suggestion</h4>
+                                            <div className="flex items-center gap-1 bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto">
+                                                <Sparkles size={12} className="text-indigo-500 shrink-0" />
+                                                <span>AI recommended</span>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-stone-700 font-medium text-sm md:text-base break-words">{optimizedTitle}</p>
                                     </div>
                                 </div>
 
@@ -125,12 +382,16 @@ const SEO = () => {
                                 <div className="mb-8">
                                     <h3 className="text-lg font-medium text-stone-800 mb-3">Generated Description</h3>
                                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-300">
-                                        <p className="text-stone-700 mb-3">
-                                            Looking to increase your website's visibility? This comprehensive tutorial walks you through proven SEO strategies that actually work in 2025. We'll cover keyword research, on-page optimization techniques, backlink building strategies, and user experience improvements that will boost your organic traffic. Perfect for beginners and intermediate marketers who want actionable tips they can implement right away.
+                                        <p className="text-stone-700 whitespace-pre-line">
+                                            {description}
                                         </p>
-                                        <p className="text-stone-700">
-                                            #SEOTips #WebsiteTraffic #DigitalMarketing #ContentStrategy #2025SEO
-                                        </p>
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            {hashtags.map((tag, index) => (
+                                                <span key={index} className="bg-stone-200 text-stone-700 px-3 py-1 rounded-full text-sm">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -138,8 +399,8 @@ const SEO = () => {
                                 <div className="mb-8">
                                     <h3 className="text-lg font-medium text-stone-800 mb-3">Recommended Tags</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {['SEO', 'Website Traffic', 'Digital Marketing', 'Content Strategy', 'SEO Tutorial', 'Traffic Generation', 'Organic Traffic', 'SEO Tips', 'Keyword Research', 'Website Optimization'].map((tag) => (
-                                            <span key={tag} className="bg-stone-200 text-stone-800 px-3 py-1 rounded-full text-sm">
+                                        {tags.map((tag, index) => (
+                                            <span key={index} className="bg-stone-200 text-stone-800 px-3 py-1 rounded-full text-sm">
                                                 {tag}
                                             </span>
                                         ))}
@@ -150,22 +411,24 @@ const SEO = () => {
                                 <div>
                                     <h3 className="text-lg font-medium text-stone-800 mb-3">Content Improvement Suggestions</h3>
                                     <ul className="space-y-3">
-                                        <li className="flex items-start">
-                                            <Check size={18} className="text-stone-700 mr-2 mt-0.5 flex-shrink-0" />
-                                            <span className="text-stone-700">Include step-by-step demonstrations of at least 3 SEO techniques</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <Check size={18} className="text-stone-700 mr-2 mt-0.5 flex-shrink-0" />
-                                            <span className="text-stone-700">Show real examples of before/after results with these methods</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <AlertCircle size={18} className="text-stone-600 mr-2 mt-0.5 flex-shrink-0" />
-                                            <span className="text-stone-700">Consider adding a section about mobile optimization (high search volume)</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <X size={18} className="text-stone-500 mr-2 mt-0.5 flex-shrink-0" />
-                                            <span className="text-stone-700">Avoid focusing only on theory; viewers want actionable advice</span>
-                                        </li>
+                                        {strengthPoints.map((point, index) => (
+                                            <li key={`strength-${index}`} className="flex items-start">
+                                                <Check size={18} className="text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span className="text-stone-700">{point}</span>
+                                            </li>
+                                        ))}
+                                        {opportunityPoints.map((point, index) => (
+                                            <li key={`opportunity-${index}`} className="flex items-start">
+                                                <AlertCircle size={18} className="text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span className="text-stone-700">{point}</span>
+                                            </li>
+                                        ))}
+                                        {weaknessPoints.map((point, index) => (
+                                            <li key={`weakness-${index}`} className="flex items-start">
+                                                <X size={18} className="text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span className="text-stone-700">{point}</span>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             </div>
@@ -181,12 +444,7 @@ const SEO = () => {
                                 <div className="mb-6">
                                     <h3 className="text-lg font-medium text-stone-800 mb-3">Primary Keywords</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {[
-                                            { keyword: 'SEO techniques 2025', volume: 'High', difficulty: 'Medium' },
-                                            { keyword: 'increase website traffic', volume: 'Very High', difficulty: 'High' },
-                                            { keyword: 'SEO tutorial beginners', volume: 'Medium', difficulty: 'Low' },
-                                            { keyword: 'organic traffic strategies', volume: 'Medium', difficulty: 'Medium' }
-                                        ].map((item, index) => (
+                                        {primaryKeywords.map((item, index) => (
                                             <div key={index} className="flex justify-between bg-stone-50 p-3 rounded-lg border border-stone-300">
                                                 <span className="font-medium text-stone-800">{item.keyword}</span>
                                                 <div className="flex space-x-2">
@@ -201,12 +459,7 @@ const SEO = () => {
                                 <div>
                                     <h3 className="text-lg font-medium text-stone-800 mb-3">Long-tail Opportunities</h3>
                                     <ul className="space-y-2">
-                                        {[
-                                            'how to improve website SEO in one month',
-                                            'best SEO tools for small business 2025',
-                                            'SEO step by step guide for beginners free',
-                                            'how to rank higher on Google search results'
-                                        ].map((item, index) => (
+                                        {longTailKeywords.map((item, index) => (
                                             <li key={index} className="flex items-center">
                                                 <ArrowRight size={16} className="text-stone-600 mr-2" />
                                                 <span className="text-stone-700">{item}</span>
@@ -229,22 +482,22 @@ const SEO = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-300">
                                         <h4 className="font-medium text-stone-800 mb-2">Optimal Video Length</h4>
-                                        <p className="text-stone-700">12-18 minutes (detailed but concise)</p>
+                                        <p className="text-stone-700">{optimalVideoLength}</p>
                                     </div>
 
                                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-300">
                                         <h4 className="font-medium text-stone-800 mb-2">Best Publishing Time</h4>
-                                        <p className="text-stone-700">Tuesday/Wednesday, 10AM-2PM EST</p>
+                                        <p className="text-stone-700">{bestPublishingTime}</p>
                                     </div>
 
                                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-300">
                                         <h4 className="font-medium text-stone-800 mb-2">Thumbnail Style</h4>
-                                        <p className="text-stone-700">Before/After results with data visualization</p>
+                                        <p className="text-stone-700">{thumbnailStyle}</p>
                                     </div>
 
                                     <div className="p-4 bg-stone-50 rounded-lg border border-stone-300">
                                         <h4 className="font-medium text-stone-800 mb-2">Engagement Hooks</h4>
-                                        <p className="text-stone-700">Specific numbers/percentages in title & intro</p>
+                                        <p className="text-stone-700">{engagementHooks}</p>
                                     </div>
                                 </div>
                             </div>
