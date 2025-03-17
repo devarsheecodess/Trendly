@@ -1,31 +1,101 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const VoiceOver = () => {
     const [script, setScript] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [audioUrl, setAudioUrl] = useState('');
-    const [selectedVoice, setSelectedVoice] = useState('female-1');
+    const [selectedVoice, setSelectedVoice] = useState('');
     const [voiceSpeed, setVoiceSpeed] = useState(1);
+    const [availableVoices, setAvailableVoices] = useState([]);
     const audioRef = useRef(null);
+    const synthRef = useRef(window.speechSynthesis);
 
-    // Voice options
-    const voices = [
-        { id: 'female-1', name: 'Emma (Female)', accent: 'American' },
-        { id: 'male-1', name: 'James (Male)', accent: 'British' },
-        { id: 'female-2', name: 'Sophia (Female)', accent: 'Australian' },
-        { id: 'male-2', name: 'Michael (Male)', accent: 'American' },
-    ];
+    // Load available voices when component mounts
+    useEffect(() => {
+        const loadVoices = () => {
+            const voices = synthRef.current.getVoices();
+            if (voices.length > 0) {
+                setAvailableVoices(voices);
+                setSelectedVoice(voices[0].voiceURI);
+            }
+        };
+
+        // Load immediately if voices are already available
+        loadVoices();
+
+        // Set up event listener for when voices change/load
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        return () => {
+            // Clean up by canceling any ongoing speech
+            synthRef.current.cancel();
+        };
+    }, []);
 
     const handleGenerate = () => {
-        if (!script) return;
+        if (!script || isGenerating) return;
 
         setIsGenerating(true);
 
-        // Simulate AI voice generation
-        setTimeout(() => {
-            setAudioUrl('https://example.com/sample-audio.mp3');
+        // Create speech synthesis utterance
+        const utterance = new SpeechSynthesisUtterance(script);
+
+        // Set voice and rate
+        utterance.voice = availableVoices.find(voice => voice.voiceURI === selectedVoice);
+        utterance.rate = voiceSpeed;
+
+        try {
+            // Use MediaRecorder to capture the audio
             setIsGenerating(false);
-        }, 2000);
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const destination = audioContext.createMediaStreamDestination();
+            const mediaRecorder = new MediaRecorder(destination.stream);
+            const audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const url = URL.createObjectURL(audioBlob);
+                setAudioUrl(url);
+            };
+
+            // Ensure utterance.onend is set before starting speech
+            utterance.onend = () => {
+                mediaRecorder.stop();
+                setIsGenerating(false);
+            };
+
+            // Start recording and speak
+            mediaRecorder.start();
+            synthRef.current.speak(utterance);
+
+        } catch (error) {
+            console.error("Error generating speech:", error);
+
+            // Fallback method if MediaRecorder doesn't work
+            synthRef.current.cancel();
+
+            // Create a new utterance for direct playback
+            const fallbackUtterance = new SpeechSynthesisUtterance(script);
+            fallbackUtterance.voice = availableVoices.find(voice => voice.voiceURI === selectedVoice);
+            fallbackUtterance.rate = voiceSpeed;
+
+            // Set onend before speaking
+            fallbackUtterance.onend = () => {
+                setIsGenerating(false);
+                setAudioUrl("direct-playback");
+            };
+
+            // Just prepare it for playback without auto-playing
+            synthRef.current.cancel(); // Ensure nothing is playing
+            setAudioUrl("direct-playback");
+            setIsGenerating(false);
+        }
     };
 
     const handleImport = () => {
@@ -47,8 +117,41 @@ const VoiceOver = () => {
         input.click();
     };
 
+    const handlePlayAudio = () => {
+        if (audioUrl === "direct-playback") {
+            // For fallback method, speak directly
+            const utterance = new SpeechSynthesisUtterance(script);
+            utterance.voice = availableVoices.find(voice => voice.voiceURI === selectedVoice);
+            utterance.rate = voiceSpeed;
+            synthRef.current.cancel(); // Cancel any ongoing speech
+            synthRef.current.speak(utterance);
+        } else if (audioRef.current) {
+            audioRef.current.play();
+        }
+    };
+
+    const handleDownload = () => {
+        if (audioUrl && audioUrl !== "direct-playback") {
+            // Create an anchor element with download attribute
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = 'voice-over.wav';
+
+            // Append to body, click, and remove
+            document.body.appendChild(a);
+            a.click();
+
+            // Small timeout to ensure download starts before removing
+            setTimeout(() => {
+                document.body.removeChild(a);
+            }, 100);
+        } else {
+            alert("Sorry, download is not available with the fallback method. Please try a different browser.");
+        }
+    };
+
     return (
-        <div className="w-full p-3 sm:p-4 md:p-6 bg-stone-50 min-h-screen md:pl-[300px] lg:pl-[300px]">
+        <div className="w-full p-3 sm:p-4 md:p-6 bg-stone-50 min-h-screen md:pl-72 lg:pl-72">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 mb-3 sm:mb-4 md:mb-6">Voice Over</h1>
 
             <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6">
@@ -92,9 +195,9 @@ const VoiceOver = () => {
                                 onChange={(e) => setSelectedVoice(e.target.value)}
                                 className="w-full px-3 py-2 rounded-md border border-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-300 bg-white text-stone-900"
                             >
-                                {voices.map((voice) => (
-                                    <option key={voice.id} value={voice.id}>
-                                        {voice.name} ({voice.accent})
+                                {availableVoices.map((voice) => (
+                                    <option key={voice.voiceURI} value={voice.voiceURI}>
+                                        {voice.name} ({voice.lang})
                                     </option>
                                 ))}
                             </select>
@@ -124,8 +227,8 @@ const VoiceOver = () => {
 
                     <button
                         onClick={handleGenerate}
-                        disabled={!script || isGenerating}
-                        className={`w-full px-4 py-2 sm:py-3 rounded-md font-medium mt-2 sm:mt-3 ${!script || isGenerating
+                        disabled={!script || isGenerating || availableVoices.length === 0}
+                        className={`w-full px-4 py-2 sm:py-3 rounded-md font-medium mt-2 sm:mt-3 ${!script || isGenerating || availableVoices.length === 0
                             ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                             : 'bg-stone-800 text-white hover:bg-stone-900'
                             } transition-colors flex items-center justify-center`}
@@ -152,7 +255,7 @@ const VoiceOver = () => {
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                         <button
                             className="px-3 py-1.5 text-sm rounded-md bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center"
-                            onClick={() => audioRef.current?.play()}
+                            onClick={handlePlayAudio}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -160,24 +263,35 @@ const VoiceOver = () => {
                             </svg>
                             Play
                         </button>
-                        <a
-                            href={audioUrl}
-                            download="voice-over.mp3"
-                            className="px-3 py-1.5 text-sm rounded-md bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center"
+                        <button
+                            onClick={handleDownload}
+                            className={`px-3 py-1.5 text-sm rounded-md ${audioUrl === "direct-playback"
+                                ? 'bg-stone-200 text-stone-500 cursor-not-allowed'
+                                : 'bg-stone-100 text-stone-800 hover:bg-stone-200'
+                                } transition-colors flex items-center justify-center`}
+                            disabled={audioUrl === "direct-playback"}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Download
-                        </a>
+                        </button>
                     </div>
                 </div>
 
                 <div className="bg-stone-50 p-2 sm:p-3 md:p-4 rounded-md">
-                    <audio ref={audioRef} controls className="w-full">
-                        <source src={audioUrl} type="audio/mp3" />
-                        Your browser does not support the audio element.
-                    </audio>
+                    {audioUrl !== "direct-playback" && (
+                        <audio ref={audioRef} controls className="w-full" autoPlay={false}>
+                            <source src={audioUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    )}
+                    {audioUrl === "direct-playback" && (
+                        <div className="text-center text-stone-600 py-4">
+                            <p>Audio will be played directly using your browser's speech synthesis.</p>
+                            <p className="text-sm mt-2">Click the Play button above to hear the voice over.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

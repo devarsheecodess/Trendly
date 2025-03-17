@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarIcon, Clock, Film, FileText, Youtube, Image, Search, ChevronRight } from 'lucide-react';
+import DetailPopup from './DetailPopup';
 
 const History = () => {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -32,6 +33,30 @@ const History = () => {
             { id: 2, title: "Honest Review: Latest Tech", date: "Mar 10, 2025", views: 8761, likes: 943, url: "youtu.be/def456" },
             { id: 3, title: "How I Built My Home Studio", date: "Mar 6, 2025", views: 12453, likes: 1832, url: "youtu.be/ghi789" },
         ]
+    };
+
+    // Inside your History component, add the following state:
+    const [detailPopup, setDetailPopup] = useState({
+        isOpen: false,
+        itemType: '',
+        itemData: null
+    });
+
+    // Add this function to handle opening the popup
+    const openDetailPopup = (type, data) => {
+        setDetailPopup({
+            isOpen: true,
+            itemType: type,
+            itemData: data
+        });
+    };
+
+    // Add this function to handle closing the popup
+    const closeDetailPopup = () => {
+        setDetailPopup(prev => ({
+            ...prev,
+            isOpen: false
+        }));
     };
 
     const getTimeAgo = (dateStr) => {
@@ -92,7 +117,12 @@ const History = () => {
                                     </div>
                                     <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                         <span className="text-sm text-stone-600">{script.status}</span>
-                                        <button className="text-sm text-stone-600 hover:text-stone-800">View</button>
+                                        <button
+                                            className="text-sm text-stone-600 hover:text-stone-800"
+                                            onClick={() => openDetailPopup('script', script)}
+                                        >
+                                            View
+                                        </button>
                                     </div>
                                 </ActivityCard>
                             ))}
@@ -195,7 +225,12 @@ const History = () => {
                                             </div>
                                             <span className="text-sm text-stone-600 ml-2">{seo.score}%</span>
                                         </div>
-                                        <button className="text-sm text-stone-600 hover:text-stone-800">Details</button>
+                                        <button
+                                            className="text-sm text-stone-600 hover:text-stone-800"
+                                            onClick={() => openDetailPopup('seo', seo)}
+                                        >
+                                            Details
+                                        </button>
                                     </div>
                                 </ActivityCard>
                             ))}
@@ -257,7 +292,12 @@ const History = () => {
                                 </div>
                                 <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                     <span className="text-sm text-stone-600">{script.status}</span>
-                                    <button className="text-sm text-stone-600 hover:text-stone-800">View</button>
+                                    <button
+                                        className="text-sm text-stone-600 hover:text-stone-800"
+                                        onClick={() => openDetailPopup('script', script)}
+                                    >
+                                        View
+                                    </button>
                                 </div>
                             </ActivityCard>
                         ));
@@ -322,7 +362,12 @@ const History = () => {
                                         </div>
                                         <span className="text-sm text-stone-600 ml-2">{seo.score}%</span>
                                     </div>
-                                    <button className="text-sm text-stone-600 hover:text-stone-800">Details</button>
+                                    <button
+                                        className="text-sm text-stone-600 hover:text-stone-800"
+                                        onClick={() => openDetailPopup('seo', seo)}
+                                    >
+                                        Details
+                                    </button>
                                 </div>
                             </ActivityCard>
                         ));
@@ -399,6 +444,12 @@ const History = () => {
 
                 {renderTabContent()}
             </div>
+            <DetailPopup
+                isOpen={detailPopup.isOpen}
+                onClose={closeDetailPopup}
+                itemType={detailPopup.itemType}
+                itemData={detailPopup.itemData}
+            />
         </div>
     );
 };
