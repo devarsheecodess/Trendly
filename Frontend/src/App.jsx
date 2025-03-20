@@ -22,6 +22,7 @@ import SEO from './components/internal/SEO'
 import Post from './components/internal/Post'
 import Profile from './components/internal/Profile'
 import History from './components/internal/History'
+import Verification from './components/auth/Verification'
 
 const router = createBrowserRouter([
   {
@@ -42,6 +43,12 @@ const router = createBrowserRouter([
     path: '/auth',
     element: <div>
       <Auth />
+    </div>
+  },
+  {
+    path: '/verify',
+    element: <div>
+      <Verification />
     </div>
   },
   {
