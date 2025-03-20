@@ -14,6 +14,7 @@ const SEORoute = require("./routes/mainRoutes/SEORoute");
 const UploadRoute = require("./routes/UploadRoute");
 const UserRoutes = require("./routes/UserRoutes");
 const VoiceoverRoute = require("./routes/mainRoutes/VoiceoverRoute");
+const YoutubeRoutes = require("./routes/mainRoutes/YoutubeRoute");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use("/seo", SEORoute);
 app.use("/upload", UploadRoute);
 app.use("/user", UserRoutes);
 app.use("/voiceover", VoiceoverRoute);
+app.use("/youtube", YoutubeRoutes);
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {
