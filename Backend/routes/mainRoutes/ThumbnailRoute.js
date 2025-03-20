@@ -1,62 +1,96 @@
 const express = require("express");
+const axios = require("axios");
+const FormData = require("form-data");
+const cloudinary = require("cloudinary").v2;
 const router = express.Router();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const path = require("path");
+const fs = require("fs").promises;
 
-require("dotenv").config(); // Load environment variables
-
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-pro",
-});
+const cloudinaryConfig = require("../../config/cloudinaryConfig");
+cloudinary.config(cloudinaryConfig);
 
 router.post("/generate", async (req, res) => {
   const { prompt } = req.body;
+  console.log("Prompt:", prompt);
 
   if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required." });
+    return res.status(400).json({ error: "Prompt is required" });
   }
 
   try {
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.8,
-        topP: 1,
-        topK: 40,
-        maxOutputTokens: 1024,
-        responseMimeType: "image/png",
-      },
+    const API_KEY = process.env.STABILITY_API_KEY;
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    formData.append("output_format", "jpeg");
+
+    const response = await axios.post(
+      "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${API_KEY}`,
+          Accept: "image/*",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    const base64Image = `data:image/jpeg;base64,${Buffer.from(
+      response.data
+    ).toString("base64")}`;
+
+    const uploadResult = await cloudinary.uploader.upload(base64Image, {
+      folder: "generated_images",
     });
 
-    console.log("Full Response:", JSON.stringify(result, null, 2));
+    console.log("Image URL:", uploadResult.secure_url);
 
-    const imageData =
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.base64;
-
-    if (!imageData) {
-      return res.status(500).json({
-        error: "Failed to generate image. Check prompt or try again later.",
-      });
-    }
-
-    const base64Image = `data:image/png;base64,${imageData}`;
-    res.json({ image: base64Image });
+    res.json({ imageUrl: uploadResult.secure_url });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({
-      error: "Failed to generate image. Possible quota issue or prompt error.",
-    });
+    console.error(
+      "Error generating image:",
+      error.response?.data.toString() || error.message
+    );
+    res.status(500).json({ error: "Failed to generate image" });
   }
 });
 
-router.get("/health", (req, res) => {
-  res.json({
-    message: "API is running",
-    apiKeyLoaded: !!apiKey,
-    modelLoaded: !!model,
-  });
+router.get("/download", async (req, res) => {
+  const { imageUrl } = req.query;
+  if (!imageUrl) {
+    return res.status(400).json({ error: "Image URL is required" });
+  }
+
+  const decodedImageUrl = decodeURIComponent(imageUrl);
+  console.log("Request received for image download:", decodedImageUrl);
+
+  try {
+    const response = await axios.get(decodedImageUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+    });
+
+    const fileName = `downloaded_image_${Date.now()}.jpeg`;
+    const downloadsPath = path.join(__dirname, "..", "downloads");
+
+    await fs.mkdir(downloadsPath, { recursive: true });
+
+    const filePath = path.resolve(downloadsPath, fileName);
+    await fs.writeFile(filePath, response.data);
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+        res.status(500).json({ error: "Failed to download image" });
+      } else {
+        fs.unlink(filePath).catch(console.error); // Avoid crash on unlink failure
+      }
+    });
+  } catch (error) {
+    console.error("Error downloading image:", error.message);
+    res.status(500).json({ error: "Failed to download image" });
+  }
 });
 
 module.exports = router;
