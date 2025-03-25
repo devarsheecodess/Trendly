@@ -69,13 +69,16 @@ const ScriptWriting = () => {
         setIsEditing(false);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         console.log('Saving script...');
         const FormData = {
             userId: localStorage.getItem('userId'),
             ...generatedScript
         }
-        console.log(FormData);
+        const response = await axios.post(`${BACKEND_URL}/history/script`, FormData);
+        if (response.data.success) {
+            alert('Script saved successfully!');
+        }
     };
 
     const handleCancelEdits = () => {

@@ -50,6 +50,7 @@ const VoiceOver = () => {
         },
 
     ]);
+    const [audioDuration, setAudioDuration] = useState(0);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     const audioRef = useRef(null);
 
@@ -122,6 +123,42 @@ const VoiceOver = () => {
             }
         }
     };
+
+    const handleSave = async () => {
+        try {
+            const formData = {
+                userId: localStorage.getItem('userId'),
+                voiceover: audioUrl,
+                voice: selectedVoice,
+                duration: audioDuration // Use the audioDuration state
+            };
+            const response = await axios.post(`${BACKEND_URL}/history/voiceover`, formData);
+            if (response.data.success) {
+                alert('Voiceover saved successfully');
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    // Add useEffect to track audio duration
+    useEffect(() => {
+        const audioElement = audioRef.current;
+
+        const handleLoadedMetadata = () => {
+            // Set duration when audio metadata is loaded
+            setAudioDuration(audioElement.duration);
+        };
+
+        if (audioElement) {
+            audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+            // Cleanup listener
+            return () => {
+                audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            };
+        }
+    }, [audioUrl]);
 
     return (
         <div className="w-full p-3 sm:p-4 md:p-6 bg-stone-50 min-h-screen md:pl-72 lg:pl-72">
@@ -236,6 +273,15 @@ const VoiceOver = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 Play
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-3 py-1.5 text-sm rounded-md bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                Save
                             </button>
                             <button
                                 onClick={handleDownload}

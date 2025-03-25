@@ -277,12 +277,19 @@ const SEO = () => {
         return 'Needs Improvement';
     };
 
-    const handleSave = () => {
-        const FormData = {
-            userId: localStorage.getItem('userId'),
-            ...SEOData
+    const handleSave = async () => {
+        try {
+            const FormData = {
+                userId: localStorage.getItem('userId'),
+                ...SEOData
+            }
+            const response = await axios.post(`${BACKEND_URL}/history/seo`, FormData);
+            if (response.data.success) {
+                alert("SEO Analysis saved successfully!")
+            }
+        } catch (err) {
+            console.log(err)
         }
-        console.log(FormData);
     };
 
     return (

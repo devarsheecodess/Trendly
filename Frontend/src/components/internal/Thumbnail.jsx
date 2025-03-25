@@ -74,8 +74,19 @@ const Thumbnail = () => {
     };
 
 
-    const handleSave = () => {
-        console.log(`Saving thumbnail to the app`);
+    const handleSave = async () => {
+        try {
+            const formData = {
+                userId: localStorage.getItem('userId'),
+                thumbnail: thumbnail.url
+            }
+            const response = await axios.post(`${BACKEND_URL}/history/thumbnail`, formData);
+            if (response.data.success) {
+                alert("Thumbnail saved successfully!")
+            }
+        } catch (err) {
+            console.error(err)
+        }
     };
 
     return (
