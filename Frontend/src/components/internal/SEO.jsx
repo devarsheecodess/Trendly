@@ -277,6 +277,14 @@ const SEO = () => {
         return 'Needs Improvement';
     };
 
+    const handleSave = () => {
+        const FormData = {
+            userId: localStorage.getItem('userId'),
+            ...SEOData
+        }
+        console.log(FormData);
+    };
+
     return (
         <div className="md:ml-64 p-4 md:p-6 bg-stone-50 min-h-screen">
             <div className="max-w-5xl mx-auto">
@@ -342,8 +350,13 @@ const SEO = () => {
                     <div className="space-y-6">
                         {/* Results Section */}
                         <div className="bg-stone-100 rounded-xl shadow-lg overflow-hidden">
-                            <div className="bg-stone-800 px-6 py-4">
-                                <h2 className="text-xl font-semibold text-stone-50">SEO Analysis Results</h2>
+                            <div className="bg-stone-800 px-4 py-4 flex items-center justify-between">
+                                <h2 className="text-lg md:text-xl font-semibold text-stone-50">
+                                    SEO Analysis Results
+                                </h2>
+                                <button onClick={handleSave} className="px-4 py-2 bg-stone-700 text-stone-50 rounded-md hover:bg-stone-600 transition-colors">
+                                    Save
+                                </button>
                             </div>
 
                             <div className="p-6">

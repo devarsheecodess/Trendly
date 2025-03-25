@@ -65,7 +65,17 @@ const ScriptWriting = () => {
 
     const handleSaveEdits = () => {
         setGeneratedScript(editableScript);
+        console.log(editableScript);
         setIsEditing(false);
+    };
+
+    const handleSave = () => {
+        console.log('Saving script...');
+        const FormData = {
+            userId: localStorage.getItem('userId'),
+            ...generatedScript
+        }
+        console.log(FormData);
     };
 
     const handleCancelEdits = () => {
@@ -212,15 +222,26 @@ const ScriptWriting = () => {
                     <h2 className="text-md sm:text-lg font-medium text-stone-900 mb-2 sm:mb-0">Generated Script</h2>
                     <div className="flex gap-2 w-full sm:w-auto">
                         {!isEditing && generatedScript && (
-                            <button
-                                onClick={handleEditToggle}
-                                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-sm font-medium bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center sm:justify-start flex-1 sm:flex-none"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                                Edit
-                            </button>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={handleSave}
+                                    className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-sm font-medium bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center sm:justify-start flex-1 sm:flex-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                    Save
+                                </button>
+                                <button
+                                    onClick={handleEditToggle}
+                                    className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-sm font-medium bg-stone-100 text-stone-800 hover:bg-stone-200 transition-colors flex items-center justify-center sm:justify-start flex-1 sm:flex-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                    Edit
+                                </button>
+                            </div>
                         )}
                         {isEditing && (
                             <>
