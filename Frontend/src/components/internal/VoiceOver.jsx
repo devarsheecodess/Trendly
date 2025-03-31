@@ -5,7 +5,7 @@ const VoiceOver = () => {
     const [script, setScript] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [audioUrl, setAudioUrl] = useState('');
-    const [selectedVoice, setSelectedVoice] = useState('FFmp1h1BMl0iVHA0JxrI');
+    const [selectedVoice, setSelectedVoice] = useState();
     const [voiceSpeed, setVoiceSpeed] = useState(1);
     const [availableVoices, setAvailableVoices] = useState([
         {
@@ -126,10 +126,19 @@ const VoiceOver = () => {
 
     const handleSave = async () => {
         try {
+            const prompt = `Generate a small concise title for the following script: ${script}`;
+            const titleResponse = await axios.post(`${BACKEND_URL}/prompt/generate`, {
+                prompt: prompt,
+            });
+            const title = titleResponse.data.response
+
+            const voiceName = availableVoices.find(voice => voice.voiceURI === selectedVoice)?.name || 'Unknown Voice';
+
             const formData = {
                 userId: localStorage.getItem('userId'),
+                title: title,
                 voiceover: audioUrl,
-                voice: selectedVoice,
+                voice: voiceName,
                 duration: audioDuration // Use the audioDuration state
             };
             const response = await axios.post(`${BACKEND_URL}/history/voiceover`, formData);

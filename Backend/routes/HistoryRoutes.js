@@ -65,8 +65,9 @@ router.post("/voiceover", async (req, res) => {
 
 // Get all scripts from history
 router.get("/scripts", async (req, res) => {
+  const id = req.query.id;
   try {
-    const scripts = await ScriptModel.find();
+    const scripts = await ScriptModel.find({ userId: id });
     res.send({ success: true, scripts });
   } catch (error) {
     res
@@ -77,8 +78,9 @@ router.get("/scripts", async (req, res) => {
 
 // Get all SEOs from history
 router.get("/seos", async (req, res) => {
+  const id = req.query.id;
   try {
-    const seos = await SEOModel.find();
+    const seos = await SEOModel.find({ userId: id });
     res.send({ success: true, seos });
   } catch (error) {
     res
@@ -89,8 +91,9 @@ router.get("/seos", async (req, res) => {
 
 // Get all thumbnails from history
 router.get("/thumbnails", async (req, res) => {
+  const id = req.query.id;
   try {
-    const thumbnails = await ThumbnailModel.find();
+    const thumbnails = await ThumbnailModel.find({ userId: id });
     res.send({ success: true, thumbnails });
   } catch (error) {
     res.status(500).send({
@@ -102,8 +105,9 @@ router.get("/thumbnails", async (req, res) => {
 
 // Get all voiceovers from history
 router.get("/voiceovers", async (req, res) => {
+  const id = req.query.id;
   try {
-    const voiceovers = await VoiceoverModel.find();
+    const voiceovers = await VoiceoverModel.find({ userId: id });
     res.send({ success: true, voiceovers });
   } catch (error) {
     res.status(500).send({

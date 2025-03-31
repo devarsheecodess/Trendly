@@ -1,39 +1,138 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, Film, FileText, Youtube, Image, Search, ChevronRight } from 'lucide-react';
 import DetailPopup from './DetailPopup';
+import axios from 'axios';
 
 const History = () => {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     const [activeTab, setActiveTab] = useState("all");
+    const [userId, setUserId] = useState(localStorage.getItem("userId"));
 
     // Sample data for demonstration
-    const activities = {
-        scripts: [
-            { id: 1, title: "How to Cook Perfect Pasta", date: "Mar 15, 2025", status: "Completed", wordCount: 856 },
-            { id: 2, title: "Top 10 Travel Destinations 2025", date: "Mar 12, 2025", status: "Completed", wordCount: 1243 },
-            { id: 3, title: "AI in Everyday Life", date: "Mar 10, 2025", status: "Completed", wordCount: 976 },
-        ],
-        voiceDubbings: [
+    const [activities, setActivities] = useState({
+        scripts: [], voiceDubbings: [
             { id: 1, title: "Product Review Narration", date: "Mar 14, 2025", duration: "4:32", voice: "Emma" },
             { id: 2, title: "Tutorial Voice Over", date: "Mar 11, 2025", duration: "8:15", voice: "James" },
-            { id: 3, title: "Documentary Narration", date: "Mar 8, 2025", duration: "12:45", voice: "David" },
-        ],
-        thumbnails: [
-            { id: 1, title: "Summer Vlog Thumbnail", date: "Mar 16, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
-            { id: 2, title: "Product Review Thumbnail", date: "Mar 13, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
-            { id: 3, title: "Tutorial Series Thumbnail", date: "Mar 9, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
-        ],
-        seoAnalyses: [
-            { id: 1, title: "Gaming Channel Optimization", date: "Mar 15, 2025", score: 92, keywords: 14 },
-            { id: 2, title: "Cooking Content Analysis", date: "Mar 12, 2025", score: 87, keywords: 18 },
-            { id: 3, title: "Travel Vlog SEO Review", date: "Mar 8, 2025", score: 84, keywords: 12 },
-        ],
-        youtubePosts: [
-            { id: 1, title: "My Morning Routine 2025", date: "Mar 14, 2025", views: 4325, likes: 512, url: "youtu.be/abc123" },
-            { id: 2, title: "Honest Review: Latest Tech", date: "Mar 10, 2025", views: 8761, likes: 943, url: "youtu.be/def456" },
-            { id: 3, title: "How I Built My Home Studio", date: "Mar 6, 2025", views: 12453, likes: 1832, url: "youtu.be/ghi789" },
-        ]
+            { id: 3, title: "Documentary Narration", date: "Mar 8, 2025", duration: "12:45", voice: "David" },], thumbnails: [
+                { id: 1, title: "Summer Vlog Thumbnail", date: "Mar 16, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
+                { id: 2, title: "Product Review Thumbnail", date: "Mar 13, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
+                { id: 3, title: "Tutorial Series Thumbnail", date: "Mar 9, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },], seoAnalyses: [
+                    { id: 1, title: "Gaming Channel Optimization", date: "Mar 15, 2025", score: 92, keywords: 14 },
+                    { id: 2, title: "Cooking Content Analysis", date: "Mar 12, 2025", score: 87, keywords: 18 },
+                    { id: 3, title: "Travel Vlog SEO Review", date: "Mar 8, 2025", score: 84, keywords: 12 },], youtubePosts: [
+                        { id: 1, title: "My Morning Routine 2025", date: "Mar 14, 2025", views: 4325, likes: 512, url: "youtu.be/abc123" },
+                        { id: 2, title: "Honest Review: Latest Tech", date: "Mar 10, 2025", views: 8761, likes: 943, url: "youtu.be/def456" },
+                        { id: 3, title: "How I Built My Home Studio", date: "Mar 6, 2025", views: 12453, likes: 1832, url: "youtu.be/ghi789" },]
+    });
+
+    const handleExport = async (e, url, id) => {
+        e.preventDefault();
+        if (!url) return;
+        let link
+
+        try {
+            const response = await axios.get(`${BACKEND_URL}/thumbnail/download`, {
+                params: { imageUrl: encodeURIComponent(url) },
+                responseType: 'blob'
+            });
+
+            if (response.status !== 200) {
+                throw new Error("Failed to download image");
+            }
+
+            const blob = new Blob([response.data], { type: 'image/png' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `thumbnail-${id}}.jpg`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error('Error exporting thumbnail:', error.message);
+        } finally {
+            if (link) {
+                URL.revokeObjectURL(link.href);
+            }
+        }
     };
+
+
+    const formatDuration = (duration) => {
+        const totalSeconds = parseFloat(duration); // Ensure it's a number
+
+        if (isNaN(totalSeconds)) return "Unknown duration";
+
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+
+        let formattedDuration = "";
+
+        if (hours > 0) formattedDuration += `${hours} hrs `;
+        if (minutes > 0) formattedDuration += `${minutes} mins `;
+        if (seconds > 0 || formattedDuration === "") formattedDuration += `${seconds} secs`;
+
+        return formattedDuration.trim();
+    };
+
+    const playvoiceover = (e, url) => {
+        e.preventDefault();
+        const audio = new Audio(url);
+        audio.play();
+    }
+
+    const fetchScripts = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/history/scripts?id=${userId}`);
+            if (response.data.success) {
+                setActivities(prev => ({ ...prev, scripts: response.data.scripts }));
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const fetchSEOs = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/history/seos?id=${userId}`);
+            if (response.data.success) {
+                setActivities(prev => ({ ...prev, seoAnalyses: response.data.seos }));
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const fetchThumbnails = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/history/thumbnails?id=${userId}`);
+            if (response.data.success) {
+                setActivities(prev => ({ ...prev, thumbnails: response.data.thumbnails }));
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const fetchVoiceDubbings = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/history/voiceovers?id=${userId}`);
+            if (response.data.success) {
+                setActivities(prev => ({ ...prev, voiceDubbings: response.data.voiceovers }));
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    useEffect(() => {
+        fetchScripts();
+        fetchSEOs();
+        fetchThumbnails();
+        fetchVoiceDubbings();
+    }, []);
 
     // Inside your History component, add the following state:
     const [detailPopup, setDetailPopup] = useState({
@@ -57,12 +156,6 @@ const History = () => {
             ...prev,
             isOpen: false
         }));
-    };
-
-    const getTimeAgo = (dateStr) => {
-        // This would normally calculate actual time difference
-        // For demo purposes, returning placeholder text
-        return "3 days ago";
     };
 
     // Custom tab component
@@ -111,12 +204,17 @@ const History = () => {
                                     <div className="p-4">
                                         <h3 className="font-medium text-stone-800 mb-2 truncate">{script.title}</h3>
                                         <div className="flex justify-between text-sm text-stone-500">
-                                            <span>{script.date}</span>
-                                            <span>{script.wordCount} words</span>
+                                            <span>
+                                                {new Date(script.createdAt).toLocaleDateString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                        <span className="text-sm text-stone-600">{script.status}</span>
+                                        <span className="text-sm text-stone-600"></span>
                                         <button
                                             className="text-sm text-stone-600 hover:text-stone-800"
                                             onClick={() => openDetailPopup('script', script)}
@@ -146,13 +244,19 @@ const History = () => {
                                     <div className="p-4">
                                         <h3 className="font-medium text-stone-800 mb-2 truncate">{dubbing.title}</h3>
                                         <div className="flex justify-between text-sm text-stone-500">
-                                            <span>{dubbing.date}</span>
-                                            <span>{dubbing.duration}</span>
+                                            <span>
+                                                {new Date(dubbing.createdAt).toLocaleString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "long",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+                                            <span>{formatDuration(dubbing.duration)}</span>
                                         </div>
                                     </div>
                                     <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                         <span className="text-sm text-stone-600">Voice: {dubbing.voice}</span>
-                                        <button className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
+                                        <button onClick={(e) => playvoiceover(e, dubbing.voiceover)} className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
                                             <Clock className="h-4 w-4 mr-1" /> Play
                                         </button>
                                     </div>
@@ -168,31 +272,44 @@ const History = () => {
                                 <Image className="h-5 w-5 mr-2 text-stone-600" />
                                 Thumbnails
                             </h2>
-                            <button onClick={() => handleViewAll("thumbnails")} className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
+                            <button
+                                onClick={() => handleViewAll("thumbnails")}
+                                className="text-sm text-stone-600 hover:text-stone-800 flex items-center"
+                            >
                                 View all <ChevronRight className="h-4 w-4 ml-1" />
                             </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {activities.thumbnails.slice(0, 3).map(thumbnail => (
-                                <ActivityCard key={thumbnail.id}>
+                                <ActivityCard key={thumbnail._id}>
                                     <div className="relative overflow-hidden" style={{ paddingTop: "56.25%" }}>
                                         <img
-                                            src={thumbnail.previewUrl}
-                                            alt={thumbnail.title}
+                                            src={thumbnail.thumbnail}
+                                            alt={`Thumbnail for ${thumbnail.title}`}
                                             className="absolute top-0 left-0 w-full h-full object-cover"
                                         />
                                     </div>
                                     <div className="p-4">
                                         <h3 className="font-medium text-stone-800 mb-2 truncate">{thumbnail.title}</h3>
                                         <div className="flex justify-between text-sm text-stone-500">
-                                            <span>{thumbnail.date}</span>
-                                            <span>{thumbnail.dimensions}</span>
+                                            <span>
+                                                {new Date(thumbnail.createdAt).toLocaleDateString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                })}
+                                            </span>
                                         </div>
+                                    </div>
+                                    <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
+                                        <span className="text-sm text-stone-600"></span>
+                                        <button onClick={(e) => handleExport(e, thumbnail.thumbnail, thumbnail._id)} className="text-sm text-stone-600 hover:text-stone-800">Download</button>
                                     </div>
                                 </ActivityCard>
                             ))}
                         </div>
                     </div>
+
 
                     {/* SEO Section */}
                     <div>
@@ -207,23 +324,33 @@ const History = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {activities.seoAnalyses.slice(0, 3).map(seo => (
-                                <ActivityCard key={seo.id}>
+                                <ActivityCard key={seo._id}>
                                     <div className="p-4">
-                                        <h3 className="font-medium text-stone-800 mb-2 truncate">{seo.title}</h3>
+                                        <h3 className="font-medium text-stone-800 mb-2 truncate">{seo.optimizedTitle}</h3>
                                         <div className="flex justify-between text-sm text-stone-500">
-                                            <span>{seo.date}</span>
-                                            <span>{seo.keywords} keywords</span>
+                                            <span>
+                                                {new Date(seo.createdAt).toLocaleDateString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                         <div className="flex items-center">
                                             <div className="h-2 w-16 bg-stone-200 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-green-500 rounded-full"
-                                                    style={{ width: `${seo.score}%` }}
+                                                    className={`h-full rounded-full ${seo.titleScore > 75
+                                                        ? "bg-green-500"
+                                                        : seo.titleScore > 50
+                                                            ? "bg-yellow-500"
+                                                            : "bg-red-500"
+                                                        }`}
+                                                    style={{ width: `${seo.titleScore}%` }}
                                                 ></div>
                                             </div>
-                                            <span className="text-sm text-stone-600 ml-2">{seo.score}%</span>
+                                            <span className="text-sm text-stone-600 ml-2">{seo.titleScore}%</span>
                                         </div>
                                         <button
                                             className="text-sm text-stone-600 hover:text-stone-800"
@@ -286,12 +413,17 @@ const History = () => {
                                 <div className="p-4 flex-grow">
                                     <h3 className="font-medium text-stone-800 mb-2">{script.title}</h3>
                                     <div className="flex justify-between text-sm text-stone-500">
-                                        <span>{script.date}</span>
-                                        <span>{script.wordCount} words</span>
+                                        <span>
+                                            {new Date(script.createdAt).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "long",
+                                                year: "numeric",
+                                            })}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600">{script.status}</span>
+                                    <span className="text-sm text-stone-600"></span>
                                     <button
                                         className="text-sm text-stone-600 hover:text-stone-800"
                                         onClick={() => openDetailPopup('script', script)}
@@ -307,13 +439,19 @@ const History = () => {
                                 <div className="p-4 flex-grow">
                                     <h3 className="font-medium text-stone-800 mb-2">{dubbing.title}</h3>
                                     <div className="flex justify-between text-sm text-stone-500">
-                                        <span>{dubbing.date}</span>
+                                        <span>
+                                            {new Date(dubbing.createdAt).toLocaleString("en-GB", {
+                                                day: "2-digit",
+                                                month: "long",
+                                                year: "numeric"
+                                            })}
+                                        </span>
                                         <span>{dubbing.duration}</span>
                                     </div>
                                 </div>
                                 <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                     <span className="text-sm text-stone-600">Voice: {dubbing.voice}</span>
-                                    <button className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
+                                    <button onClick={(e) => playvoiceover(e, dubbing.voiceover)} className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
                                         <Clock className="h-4 w-4 mr-1" /> Play
                                     </button>
                                 </div>
@@ -324,7 +462,7 @@ const History = () => {
                             <ActivityCard key={thumbnail.id} className="flex flex-col h-full">
                                 <div className="relative overflow-hidden" style={{ paddingTop: "56.25%" }}>
                                     <img
-                                        src={thumbnail.previewUrl}
+                                        src={thumbnail.thumbnail}
                                         alt={thumbnail.title}
                                         className="absolute top-0 left-0 w-full h-full object-cover"
                                     />
@@ -332,13 +470,18 @@ const History = () => {
                                 <div className="p-4 flex-grow">
                                     <h3 className="font-medium text-stone-800 mb-2">{thumbnail.title}</h3>
                                     <div className="flex justify-between text-sm text-stone-500">
-                                        <span>{thumbnail.date}</span>
-                                        <span>{thumbnail.dimensions}</span>
+                                        <span>
+                                            {new Date(thumbnail.createdAt).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "long",
+                                                year: "numeric",
+                                            })}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600">Thumbnail</span>
-                                    <button className="text-sm text-stone-600 hover:text-stone-800">Download</button>
+                                    <span className="text-sm text-stone-600"></span>
+                                    <button onClick={(e) => handleExport(e, thumbnail.thumbnail, thumbnail._id)} className="text-sm text-stone-600 hover:text-stone-800">Download</button>
                                 </div>
                             </ActivityCard>
                         ));
@@ -346,21 +489,32 @@ const History = () => {
                         return tabData.map(seo => (
                             <ActivityCard key={seo.id} className="flex flex-col h-full">
                                 <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{seo.title}</h3>
+                                    <h3 className="font-medium text-stone-800 mb-2">{seo.optimizedTitle}</h3>
                                     <div className="flex justify-between text-sm text-stone-500">
-                                        <span>{seo.date}</span>
-                                        <span>{seo.keywords} keywords</span>
+                                        <span>
+                                            {new Date(seo.createdAt).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "long",
+                                                year: "numeric",
+                                            })}
+                                        </span>
+                                        <span>{seo.primaryKeywords.length} keywords</span>
                                     </div>
                                 </div>
                                 <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
                                     <div className="flex items-center">
                                         <div className="h-2 w-16 bg-stone-200 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-green-500 rounded-full"
-                                                style={{ width: `${seo.score}%` }}
+                                                className={`h-full rounded-full ${seo.titleScore > 75
+                                                    ? "bg-green-500"
+                                                    : seo.titleScore > 50
+                                                        ? "bg-yellow-500"
+                                                        : "bg-red-500"
+                                                    }`}
+                                                style={{ width: `${seo.titleScore}%` }}
                                             ></div>
                                         </div>
-                                        <span className="text-sm text-stone-600 ml-2">{seo.score}%</span>
+                                        <span className="text-sm text-stone-600 ml-2">{seo.titleScore}%</span>
                                     </div>
                                     <button
                                         className="text-sm text-stone-600 hover:text-stone-800"

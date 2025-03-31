@@ -78,6 +78,7 @@ const Thumbnail = () => {
         try {
             const formData = {
                 userId: localStorage.getItem('userId'),
+                title: topic,
                 thumbnail: thumbnail.url
             }
             const response = await axios.post(`${BACKEND_URL}/history/thumbnail`, formData);
