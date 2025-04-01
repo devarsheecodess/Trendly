@@ -16,6 +16,7 @@ const UserRoutes = require("./routes/UserRoutes");
 const VoiceoverRoute = require("./routes/mainRoutes/VoiceoverRoute");
 const YoutubeRoutes = require("./routes/mainRoutes/YoutubeRoute");
 const HistoryRoutes = require("./routes/HistoryRoutes");
+const OtpRoutes = require("./routes/OtpRoutes"); // Import OTP Routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.use("/user", UserRoutes);
 app.use("/voiceover", VoiceoverRoute);
 app.use("/youtube", YoutubeRoutes);
 app.use("/history", HistoryRoutes);
+app.use("/otp", OtpRoutes); // Use OTP Routes
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {

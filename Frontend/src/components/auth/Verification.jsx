@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
 const Verification = () => {
-    const [email, setEmail] = useState("user@example.com");
+    const [email, setEmail] = useState(localStorage.getItem('email'));
     const [otp, setOtp] = useState(['', '', '', '']);
     const [timeLeft, setTimeLeft] = useState(60);
     const [canResend, setCanResend] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
     // Handle OTP input change
     const handleChange = (index, value) => {
@@ -32,6 +34,19 @@ const Verification = () => {
         }
     };
 
+    const sendOTP = async () => {
+        try {
+            const response = await axios.post(`${BACKEND_URL}/otp/send`, { email });
+        } catch (error) {
+            console.error("Error sending OTP:", error);
+        }
+    }
+
+    useEffect(() => {
+        sendOTP();
+        inputRefs[0].current.focus();
+    }, []);
+
     // Handle paste event
     const handlePaste = (e) => {
         e.preventDefault();
@@ -53,14 +68,32 @@ const Verification = () => {
     };
 
     // Handle verification submission
-    const handleVerify = () => {
-        setIsVerifying(true);
-        // Simulate verification process
-        setTimeout(() => {
+    const handleVerify = async () => {
+        try {
+            setIsVerifying(true);
+            const otpString = otp.join('');
+            const otpNumber = Number(otpString); // Convert to number before sending
+
+            console.log("Verifying OTP:", otpNumber);
+            console.log("Email:", email);
+
+            const response = await axios.post(`${BACKEND_URL}/otp/verify`, {
+                email,
+                otp: otpNumber // Ensure this is a number
+            });
+
+            if (response.data.success) {
+                alert("OTP verified successfully!");
+                window.location.href = '/onbording';
+                localStorage.removeItem('email');
+            } else {
+                alert("Invalid OTP. Please try again.");
+            }
+        } catch (err) {
+            console.error("Error verifying OTP:", err);
+        } finally {
             setIsVerifying(false);
-            // Here you would add the actual verification logic
-            alert("Verification successful!");
-        }, 1500);
+        }
     };
 
     // Handle resend OTP
@@ -70,6 +103,8 @@ const Verification = () => {
         setCanResend(false);
         setOtp(['', '', '', '']);
         // Here you would add the logic to resend OTP
+        sendOTP();
+        inputRefs[0].current.focus();
         alert("New OTP sent!");
     };
 
@@ -130,8 +165,8 @@ const Verification = () => {
                     onClick={handleVerify}
                     disabled={otp.join('').length !== 4 || isVerifying}
                     className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${otp.join('').length === 4 && !isVerifying
-                            ? 'bg-stone-800 text-white hover:bg-stone-900'
-                            : 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                        ? 'bg-stone-800 text-white hover:bg-stone-900'
+                        : 'bg-stone-300 text-stone-500 cursor-not-allowed'
                         }`}
                 >
                     {isVerifying ? (

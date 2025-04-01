@@ -1,16 +1,14 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
-
 const router = express.Router();
 const otpStorage = {}; // Temporary storage, use Redis for production
 
-// Configure Nodemailer Transporter using Ethereal
+// Configure Nodemailer Transporter using Gmail
 const transporter = nodemailer.createTransport({
-  host: "",
-  port: 587,
+  service: "gmail",
   auth: {
-    user: "",
-    pass: "",
+    user: process.env.NODEMAILER_USER,
+    pass: process.env.NODEMAILER_PASS,
   },
 });
 
@@ -23,12 +21,13 @@ router.post("/send", async (req, res) => {
       .json({ success: false, error: "Email is required." });
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+  // 4-digit OTP generation
+  const otp = Math.floor(1000 + Math.random() * 9000);
   otpStorage[email] = { otp, expires: Date.now() + 5 * 60 * 1000 };
   console.log(email);
 
   const mailOptions = {
-    from: "",
+    from: process.env.NODEMAILER_USER, // Replace with your Gmail
     to: email,
     subject: "Your OTP Code",
     text: `Your OTP is: ${otp}. It expires in 5 minutes.`,
@@ -48,7 +47,17 @@ router.post("/send", async (req, res) => {
 // Function to verify OTP
 router.post("/verify", (req, res) => {
   const { email, otp } = req.body;
+  console.log("Received email:", email);
+  console.log("Received OTP:", otp, typeof otp); // Log OTP and its type
+
+  if (!email || !otp) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Email and OTP are required." });
+  }
+
   const storedOTP = otpStorage[email];
+  console.log("Stored OTP:", storedOTP);
 
   if (!storedOTP) {
     return res
@@ -61,7 +70,9 @@ router.post("/verify", (req, res) => {
     return res.status(400).json({ success: false, error: "OTP expired." });
   }
 
-  if (storedOTP.otp !== parseInt(otp)) {
+  if (storedOTP.otp !== Number(otp)) {
+    // Convert to number before comparing
+    console.log("Stored OTP:", storedOTP.otp, "Received OTP:", otp);
     return res.status(400).json({ success: false, error: "Invalid OTP." });
   }
 

@@ -56,10 +56,10 @@ const SignupForm = () => {
         try {
             const response = await axios.post(`${BACKEND_URL}/auth/signup`, formData);
             if (response.data.success) {
-                alert("Signup successful");
                 await fetchAvatar(response.data.userId);
                 localStorage.setItem('userId', response.data.userId);
-                window.location.href = '/dashboard';
+                localStorage.setItem('email', formData.email);
+                window.location.href = '/verify';
             }
         } catch (error) {
             console.error("Error signing up:", error);
