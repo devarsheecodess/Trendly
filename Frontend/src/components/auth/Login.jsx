@@ -38,6 +38,7 @@ const LoginForm = () => {
                 await fetchAvatar(response.data.userId);
                 localStorage.setItem('userId', response.data.userId);
                 localStorage.setItem('username', response.data.name);
+                localStorage.setItem('youtube', response.data.youtube);
                 window.location.href = '/dashboard';
             } else {
                 alert(response.data.message);

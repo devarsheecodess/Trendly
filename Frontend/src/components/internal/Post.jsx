@@ -23,6 +23,7 @@ const Post = () => {
     const [videoUploadProgress, setVideoUploadProgress] = useState(0);
     const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
     const [thumbnailUploadProgress, setThumbnailUploadProgress] = useState(0);
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
     const handleInputChange = (e) => {
         const { name, value, type, checked, files } = e.target;
@@ -52,7 +53,7 @@ const Post = () => {
             videoData.append("video", file);
 
             // Create axios request with progress tracking
-            const response = await axios.post("http://localhost:3000/upload-video/upload", videoData, {
+            const response = await axios.post(`${BACKEND_URL}/upload-video/upload`, videoData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -84,7 +85,7 @@ const Post = () => {
             const thumbnailData = new FormData();
             thumbnailData.append("image", file);
 
-            const response = await axios.post("http://localhost:3000/upload/store", thumbnailData, {
+            const response = await axios.post(`${BACKEND_URL}/upload/store`, thumbnailData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -144,14 +145,14 @@ const Post = () => {
             console.log("📤 Sending video data:", formDataToSend);
 
             // ✅ Step 1: Upload Video to YouTube
-            const response = await axios.post("http://localhost:3000/youtube/upload", formDataToSend);
+            const response = await axios.post(`${BACKEND_URL}/youtube/upload`, formDataToSend);
 
             if (response.data.success) {
                 alert("✅ Video posted successfully!");
                 setIsLoading(false);
 
                 // ✅ Step 2: Save Video Details to MongoDB
-                const saveVidDetails = await axios.post("http://localhost:3000/youtube/save", {
+                const saveVidDetails = await axios.post(`${BACKEND_URL}/youtube/save`, {
                     userId: localStorage.getItem("userId"),
                     title: formData.title,
                     description: formData.description,
@@ -165,12 +166,12 @@ const Post = () => {
 
                 if (saveVidDetails.data.success) {
                     // ✅ Step 3: Delete Video from Cloudinary
-                    const deleteVid = await axios.delete("http://localhost:3000/cloudinary/delete", {
+                    const deleteVid = await axios.delete(`${BACKEND_URL}/cloudinary/delete`, {
                         data: { cloudinaryUrl: formData.videoUrl } // ✅ Pass data inside `data`
                     });
 
                     // ✅ Step 4: Delete Thumbnail from Cloudinary
-                    const deleteThumbnail = await axios.delete("http://localhost:3000/cloudinary/delete", {
+                    const deleteThumbnail = await axios.delete(`${BACKEND_URL}/cloudinary/delete`, {
                         data: { cloudinaryUrl: formData.thumbnailUrl } // ✅ Pass data inside `data`
                     });
 
@@ -204,7 +205,7 @@ const Post = () => {
     const handleAuth = () => {
         try {
             const authWindow = window.open(
-                "http://localhost:3000/youtube/auth",
+                `${BACKEND_URL}/youtube/auth`,
                 "YouTubeAuth",
                 "width=500,height=600,left=100,top=100"
             );

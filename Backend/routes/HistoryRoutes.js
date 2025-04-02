@@ -6,6 +6,7 @@ const ScriptModel = require("../models/ScriptModel");
 const SEOModel = require("../models/SEOModel");
 const ThumbnailModel = require("../models/ThumbnailModel");
 const VoiceoverModel = require("../models/VoiceoverModel");
+const YoutubeModel = require("../models/YoutubeModel"); // Ensure correct path
 
 router.get("/", (req, res) => {
   res.send("History Route");
@@ -114,6 +115,18 @@ router.get("/voiceovers", async (req, res) => {
       success: false,
       message: "Failed to get voiceovers from history",
     });
+  }
+});
+
+// Get all youtube videos
+router.get("/youtube", async (req, res) => {
+  const id = req.query.id;
+  try {
+    const videos = await YoutubeModel.find({ userId: id });
+    res.json({ success: true, videos });
+  } catch (err) {
+    console.error("❌ Error fetching videos:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 

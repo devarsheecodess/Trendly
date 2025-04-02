@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const Dashboard = () => {
     const [id, setId] = useState(localStorage.getItem('userId'));
+    const [youtube, setYoutube] = useState(localStorage.getItem('youtube'));
     const [google, setGoogle] = useState(localStorage.getItem('google'));
     const [isMobile, setIsMobile] = useState(false);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -18,13 +19,8 @@ const Dashboard = () => {
     });
 
     // Trending topics data
-    const [trendingTopics, setTrendingTopics] = useState([
-        { id: 1, topic: "AI Development", popularity: 95 },
-        { id: 2, topic: "Remote Work Culture", popularity: 89 },
-        { id: 3, topic: "Sustainable Living", popularity: 82 },
-        { id: 4, topic: "Digital Privacy", popularity: 78 },
-        { id: 5, topic: "Mindfulness", popularity: 72 }
-    ]);
+    const [trendingTopics, setTrendingTopics] = useState([]);
+    const [loading, setLoading] = useState(false); // Loader state
 
     function getCookieValue(cookieName) {
         const cookies = document.cookie.split("; ");
@@ -47,33 +43,73 @@ const Dashboard = () => {
         }
     }
 
-    const fetchUserContentData = async (userId) => {
+    const fetchUserContentData = async () => {
         try {
-            // Mock data instead of actual API call since YouTube stats aren't available
-            setContentData({
-                recentProjects: [
-                    { title: "AI Assistant Review", thumbnail: "/api/placeholder/60/40", scriptStatus: "Completed", voiceoverStatus: "Completed", thumbnailStatus: "Published", publishStatus: "Published", date: "Apr 1" },
-                    { title: "Tech News Roundup", thumbnail: "/api/placeholder/60/40", scriptStatus: "Completed", voiceoverStatus: "Completed", thumbnailStatus: "Generated", publishStatus: "Scheduled", date: "Mar 30" },
-                    { title: "Gaming Setup Tour", thumbnail: "/api/placeholder/60/40", scriptStatus: "In Progress", voiceoverStatus: "Pending", thumbnailStatus: "Pending", publishStatus: "Draft", date: "Mar 28" }
-                ],
-                voiceoverStats: { completed: 15 },
-                thumbnailStats: { generated: 24 },
-                scriptStats: { completed: 12 },
-                SEOStats: { completed: 122 },
-                videoStats: { posted: 21 }
-            });
+            console.log(id)
+            const response = await axios.get(`http://localhost:3000/dashboard/stats?id=${id}`);
+            if (response.data.success) {
+                setContentData({
+                    voiceoverStats: { completed: response.data.data.voiceoverStats },
+                    thumbnailStats: { generated: response.data.data.thumbnailStats },
+                    scriptStats: { completed: response.data.data.scriptStats },
+                    SEOStats: { completed: response.data.data.SEOStats },
+                    videoStats: { posted: response.data.data.videoStats },
+                    recentProjects: response.data.data.recentProjects
+                });
+            }
         } catch (err) {
             console.error('Error fetching user content data:', err);
+        }
+    }
+
+    const fetchTrendingTopics = async () => {
+        try {
+            setLoading(true); // Set loading to true before fetching
+            const response = await axios.get(`${BACKEND_URL}/prompt/trending_topics?id=${id}`);
+
+            if (response.data?.response) {
+                // Remove the code block formatting (```json and ```)
+                const cleanedResponse = response.data.response.replace(/```json\n|\n```/g, "");
+
+                // Parse the cleaned JSON string
+                const parsedData = JSON.parse(cleanedResponse);
+
+                if (Array.isArray(parsedData)) {
+                    setTrendingTopics(parsedData);
+                    setLoading(false); // Set loading to false after fetching
+                } else {
+                    console.error("Parsed data is not an array:", parsedData);
+                }
+            } else {
+                console.error("Invalid response format:", response.data);
+            }
+        } catch (err) {
+            console.log("Error fetching trending topics:", err);
+        }
+    };
+
+    const fetchChannelName = async (id) => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/auth/channel?userId=${id}`);
+            if (response.data.success) {
+                localStorage.setItem('youtube', response.data.youtube);
+            } else {
+                localStorage.setItem('youtube', '');
+            }
+        } catch (err) {
+            console.error(err);
         }
     }
 
     useEffect(() => {
         const userId = getCookieValue("userId");
         fetchAvatar(userId);
-        fetchUserContentData(userId);
+        fetchUserContentData();
+        fetchTrendingTopics();
 
         if (google && !id) {
             localStorage.setItem('userId', userId);
+            fetchChannelName(userId);
             const username = getCookieValue("userName");
             localStorage.setItem('username', username);
             setId(userId);
@@ -95,7 +131,7 @@ const Dashboard = () => {
                 <div className="max-w-6xl mx-auto">
                     <div className="mb-6 md:mb-8">
                         <h1 className="text-xl md:text-2xl font-bold text-stone-800">Welcome to your Dashboard</h1>
-                        <p className="text-stone-500 mt-1">User ID: {id || "Not logged in"}</p>
+                        <p className="text-stone-500 mt-1">{youtube}</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
@@ -192,7 +228,7 @@ const Dashboard = () => {
                                         <thead className="bg-stone-50">
                                             <tr>
                                                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Project</th>
-                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Status</th>
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Visibility</th>
                                                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Date</th>
                                             </tr>
                                         </thead>
@@ -210,7 +246,7 @@ const Dashboard = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap">
-                                                        <StatusBadge status={project.publishStatus} />
+                                                        <StatusBadge status={project.privacy} />
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-stone-500">{project.date}</td>
                                                 </tr>
@@ -225,26 +261,31 @@ const Dashboard = () => {
                     {/* Trending Topics Section - SIMPLIFIED */}
                     <div className="mt-6 md:mt-8 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow p-5 md:p-7 border border-stone-200">
                         <div className="flex justify-between items-center mb-5">
-                            <h2 className="text-lg md:text-xl font-semibold text-stone-900">Trending Topics to Follow</h2>
+                            <h2 className="text-lg md:text-xl font-semibold text-stone-900">Content Suggestions</h2>
                             <span className="bg-indigo-100 text-indigo-600 text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1">
                                 ✨ AI recommended
                             </span>
-
                         </div>
-                        <ul className="space-y-4">
-                            {trendingTopics.map((topic) => (
-                                <li key={topic.id} className="flex justify-between items-center py-3 border-b border-stone-200 last:border-b-0">
-                                    <div>
-                                        <h3 className="font-medium text-stone-900">{topic.topic}</h3>
-                                    </div>
-                                    <div className="text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
-                                        {topic.popularity}% Hot
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
 
+                        {loading ? (
+                            <div className="flex justify-center py-5">
+                                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                            </div>
+                        ) : (
+                            <ul className="space-y-4">
+                                {trendingTopics.map((topic, index) => (
+                                    <li key={index} className="flex justify-between items-center py-3 border-b border-stone-200 last:border-b-0">
+                                        <div>
+                                            <h3 className="font-medium text-stone-900">{topic.topic}</h3>
+                                        </div>
+                                        <div className="text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+                                            {topic.popularity}% Hot
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -257,33 +298,17 @@ const StatusBadge = ({ status }) => {
     let textColor = "text-gray-800";
 
     switch (status) {
-        case "Completed":
+        case "private":
+            bgColor = "bg-red-100";
+            textColor = "text-red-800";
+            break;
+        case "public":
             bgColor = "bg-green-100";
             textColor = "text-green-800";
             break;
-        case "In Progress":
-            bgColor = "bg-blue-100";
-            textColor = "text-blue-800";
-            break;
-        case "Pending":
-            bgColor = "bg-yellow-100";
-            textColor = "text-yellow-800";
-            break;
-        case "Published":
-            bgColor = "bg-purple-100";
-            textColor = "text-purple-800";
-            break;
-        case "Generated":
-            bgColor = "bg-green-100";
-            textColor = "text-green-800";
-            break;
-        case "Scheduled":
-            bgColor = "bg-blue-100";
-            textColor = "text-blue-800";
-            break;
-        case "Draft":
-            bgColor = "bg-gray-100";
-            textColor = "text-gray-800";
+        case "unlisted":
+            bgColor = "bg-orange-100";
+            textColor = "text-orange-800";
             break;
     }
 

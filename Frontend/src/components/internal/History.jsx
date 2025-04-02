@@ -113,11 +113,24 @@ const History = () => {
         }
     }
 
+    const fetchYoutubePosts = async () => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/history/youtube?id=${userId}`);
+            if (response.data.success) {
+                setActivities(prev => ({ ...prev, youtubePosts: response.data.videos }));
+                console.log(response.data.videos)
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
     useEffect(() => {
         fetchScripts();
         fetchSEOs();
         fetchThumbnails();
         fetchVoiceDubbings();
+        fetchYoutubePosts();
     }, []);
 
     // Inside your History component, add the following state:
@@ -361,25 +374,50 @@ const History = () => {
                                 View all <ChevronRight className="h-4 w-4 ml-1" />
                             </button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {activities.youtubePosts.slice(0, 3).map(post => (
-                                <ActivityCard key={post.id}>
+                                <ActivityCard key={post._id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
                                     <div className="p-4">
-                                        <h3 className="font-medium text-stone-800 mb-2 truncate">{post.title}</h3>
-                                        <div className="flex justify-between text-sm text-stone-500">
-                                            <span>{post.date}</span>
-                                            <span>{post.views.toLocaleString()} views</span>
+                                        <div className="flex space-x-4">
+                                            {/* Square thumbnail */}
+                                            <div className="flex-shrink-0">
+                                                <img
+                                                    src={post.thumbnail}
+                                                    alt={post.title}
+                                                    className="w-16 h-16 object-cover rounded-md"
+                                                />
+                                            </div>
+
+                                            {/* Title and date */}
+                                            <div className="flex-grow min-w-0">
+                                                <h3 className="font-medium text-stone-800 mb-2 truncate">{post.title}</h3>
+                                                <div className="text-sm text-stone-500">
+                                                    <span>{new Date(post.createdAt).toLocaleDateString("en-GB", {
+                                                        day: "numeric",
+                                                        month: "long",
+                                                        year: "numeric"
+                                                    })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Description or additional content can go here */}
+                                        <div className="mt-4 text-sm text-stone-600 line-clamp-2">
+                                            {post.description || "Watch this video on YouTube"}
                                         </div>
                                     </div>
-                                    <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                        <span className="text-sm text-stone-600">{post.likes.toLocaleString()} likes</span>
+
+                                    <div className="bg-stone-50 px-4 py-3 border-t border-stone-100 flex justify-between items-center">
                                         <a
-                                            href={`https://${post.url}`}
+                                            href={post.video}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm text-stone-600 hover:text-stone-800"
+                                            className="text-sm font-medium text-stone-600 hover:text-stone-800 flex items-center"
                                         >
-                                            Visit
+                                            <span>Watch on YouTube</span>
+                                            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
                                         </a>
                                     </div>
                                 </ActivityCard>
@@ -514,22 +552,47 @@ const History = () => {
                     case "youtubePosts":
                         return tabData.map(post => (
                             <ActivityCard key={post.id} className="flex flex-col h-full">
-                                <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{post.title}</h3>
-                                    <div className="flex justify-between text-sm text-stone-500">
-                                        <span>{post.date}</span>
-                                        <span>{post.views.toLocaleString()} views</span>
+                                <div className="p-4">
+                                    <div className="flex space-x-4">
+                                        {/* Square thumbnail */}
+                                        <div className="flex-shrink-0">
+                                            <img
+                                                src={post.thumbnail}
+                                                alt={post.title}
+                                                className="w-16 h-16 object-cover rounded-md"
+                                            />
+                                        </div>
+
+                                        {/* Title and date */}
+                                        <div className="flex-grow min-w-0">
+                                            <h3 className="font-medium text-stone-800 mb-2 truncate">{post.title}</h3>
+                                            <div className="text-sm text-stone-500">
+                                                <span>{new Date(post.createdAt).toLocaleDateString("en-GB", {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric"
+                                                })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Description or additional content can go here */}
+                                    <div className="mt-4 text-sm text-stone-600 line-clamp-2">
+                                        {post.description || "Watch this video on YouTube"}
                                     </div>
                                 </div>
-                                <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600">{post.likes.toLocaleString()} likes</span>
+
+                                <div className="bg-stone-50 px-4 py-3 border-t border-stone-100 flex justify-between items-center">
                                     <a
-                                        href={`https://${post.url}`}
+                                        href={post.video}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-stone-600 hover:text-stone-800 flex items-center"
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
                                     >
-                                        <Youtube className="h-4 w-4 mr-1" /> Visit
+                                        <span>Watch on YouTube</span>
+                                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
                                     </a>
                                 </div>
                             </ActivityCard>

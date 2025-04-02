@@ -8,8 +8,6 @@ const oauth2Client = require("../../config/youtubeConfig"); // Ensure correct pa
 const router = express.Router();
 const TOKEN_PATH = path.resolve(__dirname, "../../config/tokens.json");
 
-const YoutubeModel = require("../../models/YoutubeModel"); // Ensure correct path
-
 // ✅ Generate OAuth2 Authentication URL
 router.get("/auth", (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({

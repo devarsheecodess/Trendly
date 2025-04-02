@@ -59,6 +59,8 @@ const SignupForm = () => {
                 await fetchAvatar(response.data.userId);
                 localStorage.setItem('userId', response.data.userId);
                 localStorage.setItem('email', formData.email);
+                localStorage.setItem('username', formData.name);
+                localStorage.setItem('youtube', formData.youtube);
                 window.location.href = '/verify';
             }
         } catch (error) {

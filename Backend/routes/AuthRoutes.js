@@ -38,7 +38,12 @@ router.post("/signup", async (req, res) => {
     data.password = hashedPassword;
     const newuser = new User(data);
     await newuser.save();
-    res.status(201).send({ success: true, userId: newuser._id });
+    res.status(201).send({
+      success: true,
+      userId: newuser._id,
+      name: newuser.name,
+      youtube: newuser.youtube,
+    });
   } catch (err) {
     console.log(err);
   }
@@ -57,9 +62,12 @@ router.post("/login", async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      res
-        .status(200)
-        .send({ success: true, userId: user._id, name: user.name });
+      res.status(200).send({
+        success: true,
+        userId: user._id,
+        name: user.name,
+        youtube: user.youtube,
+      });
     } else {
       res.status(401).send({ success: false, message: "Invalid credentials" });
     }
@@ -110,4 +118,20 @@ router.get("/avatar", async (req, res) => {
     console.log(err);
   }
 });
+
+// Get channel name
+router.get("/channel", async (req, res) => {
+  const userId = req.query.userId;
+  try {
+    const user = await User.findOne({ _id: userId });
+    if (user) {
+      res.status(200).send({ success: true, youtube: user.youtube });
+    } else {
+      res.status(200).send({ success: false, youtube: "" });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 module.exports = router;
