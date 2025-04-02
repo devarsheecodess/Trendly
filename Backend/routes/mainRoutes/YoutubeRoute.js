@@ -1,36 +1,36 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
 const { google } = require("googleapis");
-const oauth2Client = require("../../config/youtubeConfig"); // Correct import of your OAuth2 client
+const oauth2Client = require("../../config/youtubeConfig"); // Ensure correct path
+const User = require("../../models/UserModel"); // User model for storing OAuth tokens
 
 const router = express.Router();
 
-// =================== AUTH FLOW ===================
-
-// Auth Route to Generate URL
+// Generate OAuth2 Authentication URL
 router.get("/auth", (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: ["https://www.googleapis.com/auth/youtube.upload"],
   });
 
-  console.log("✅ Auth URL generated:", authUrl);
+  console.log("✅ Auth URL:", authUrl);
   res.redirect(authUrl);
 });
 
-// OAuth2 Callback
+// OAuth2 Callback - Store tokens in MongoDB
 router.get("/oauth2callback", async (req, res) => {
   const code = req.query.code;
-
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    // Save tokens for future use
-    fs.writeFileSync(
-      path.resolve(__dirname, "../../config/tokens.json"),
-      JSON.stringify(tokens)
+    // Save tokens in MongoDB
+    await User.updateOne(
+      { email: "user@example.com" }, // Replace with authenticated user
+      { googleTokens: tokens },
+      { upsert: true }
     );
 
     console.log("✅ Authentication successful! Tokens saved.");
@@ -41,44 +41,131 @@ router.get("/oauth2callback", async (req, res) => {
   }
 });
 
-// =================== VIDEO UPLOAD FLOW ===================
+// Upload Video to YouTube
+async function uploadVideo(
+  videoPath,
+  title,
+  description,
+  categoryId,
+  privacyStatus,
+  publishTime,
+  thumbnailPath
+) {
+  try {
+    // Check if videoPath is a Cloudinary URL or local path
+    let mediaBody;
+    if (videoPath.startsWith("http")) {
+      console.log("🔄 Fetching remote video from Cloudinary...");
+      const response = await axios.get(videoPath, { responseType: "stream" });
+      mediaBody = { body: response.data };
+    } else {
+      mediaBody = { body: fs.createReadStream(path.resolve(videoPath)) };
+    }
 
-async function uploadVideo(videoPath, title, description) {
-  const absoluteVideoPath = path.resolve(videoPath);
+    if (publishTime) {
+      console.warn(
+        "⚠️ Scheduling detected; setting privacyStatus to 'private'."
+      );
+      privacyStatus = "private";
+    }
 
-  const youtube = google.youtube({
-    version: "v3",
-    auth: oauth2Client,
-  });
+    const youtube = google.youtube({ version: "v3", auth: oauth2Client });
 
-  const response = await youtube.videos.insert({
-    part: "snippet,status",
-    requestBody: {
-      snippet: { title, description },
-      status: { privacyStatus: "public" },
-    },
-    media: { body: fs.createReadStream(absoluteVideoPath) },
-  });
+    // Upload Video
+    const response = await youtube.videos.insert({
+      part: "snippet,status",
+      requestBody: {
+        snippet: { title, description, categoryId: categoryId || "22" },
+        status: {
+          privacyStatus: privacyStatus || "public",
+          publishAt: publishTime || null,
+        },
+      },
+      media: mediaBody,
+    });
 
-  console.log("✅ Video uploaded:", response.data.id);
-  return response.data.id;
+    const videoId = response.data.id;
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    console.log("✅ Video uploaded:", videoUrl);
+
+    // Set Thumbnail if provided
+    if (thumbnailPath) {
+      await setThumbnail(videoId, thumbnailPath);
+    }
+
+    return { videoId, videoUrl };
+  } catch (error) {
+    console.error("❌ Upload Error:", error.response?.data || error.message);
+    throw new Error("Failed to upload video. Check logs for details.");
+  }
 }
 
-// Upload Route
+// Upload Thumbnail (Supports Local and Cloudinary URLs)
+async function setThumbnail(videoId, thumbnailPath) {
+  try {
+    const youtube = google.youtube({ version: "v3", auth: oauth2Client });
+    let mediaBody;
+
+    if (thumbnailPath.startsWith("http")) {
+      console.log("🔄 Fetching remote thumbnail...");
+      const response = await axios.get(thumbnailPath, {
+        responseType: "stream",
+      });
+      mediaBody = { body: response.data };
+    } else {
+      mediaBody = { body: fs.createReadStream(path.resolve(thumbnailPath)) };
+    }
+
+    const response = await youtube.thumbnails.set({
+      videoId,
+      media: mediaBody,
+    });
+    console.log("✅ Thumbnail uploaded:", response.data);
+  } catch (error) {
+    console.error(
+      "❌ Thumbnail Upload Error:",
+      error.response?.data || error.message
+    );
+  }
+}
+
+// Handle Video Upload API
 router.post("/upload", async (req, res) => {
-  const { videoPath, title, description } = req.body;
+  const {
+    videoPath,
+    title,
+    description,
+    categoryId,
+    privacyStatus,
+    publishTime,
+    thumbnailPath,
+  } = req.body;
 
   try {
-    const videoId = await uploadVideo(videoPath, title, description);
-    res.json({ message: "✅ Video uploaded successfully!", videoId });
+    const { videoId, videoUrl } = await uploadVideo(
+      videoPath,
+      title,
+      description,
+      categoryId,
+      privacyStatus,
+      publishTime,
+      thumbnailPath
+    );
+    res.json({
+      success: true,
+      message: "✅ Video uploaded successfully!",
+      videoId,
+      videoUrl,
+    });
   } catch (error) {
     console.error("❌ Upload Error:", error.response?.data || error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
+// Test Route
 router.get("/test", (req, res) => {
-  res.send("✅ Test route is working!");
+  res.send("✅ YouTube API Test Route is Working!");
 });
 
 module.exports = router;

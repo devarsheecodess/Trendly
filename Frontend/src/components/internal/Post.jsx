@@ -1,32 +1,109 @@
 import React, { useState } from 'react';
+import axios from "axios"
 
 const Post = () => {
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
+        title: "",
+        description: "",
         videoFile: null,
+        videoUrl: "",
         thumbnailFile: null,
-        visibility: 'public',
-        category: '',
-        tags: '',
-        schedulePost: false,
-        scheduleDate: '',
-        scheduleTime: '',
+        thumbnailUrl: "",
+        isLive: false,
     });
 
     const handleInputChange = (e) => {
         const { name, value, type, checked, files } = e.target;
+        const updatedValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value;
+
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked :
-                type === 'file' ? files[0] : value
+            [name]: updatedValue
         }));
+
+        if (type === 'file') {
+            if (name === 'videoFile') {
+                handleUploadVideo(files[0]);
+            } else if (name === 'thumbnailFile') {
+                handleUploadThumbnail(files[0]);
+            }
+        }
     };
 
-    const handleSubmit = (e) => {
+    const handleUploadVideo = async (file) => {
+        if (!file) return;
+        try {
+            const videoData = new FormData();
+            videoData.append("video", file);
+
+            const response = await axios.post("http://localhost:3000/upload-video/upload", videoData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            setFormData(prev => ({ ...prev, videoUrl: response.data.videoUrl }));
+        } catch (err) {
+            console.error("Error uploading video:", err);
+        }
+    };
+
+    const handleUploadThumbnail = async (file) => {
+        if (!file) return;
+        try {
+            const thumbnailData = new FormData();
+            thumbnailData.append("image", file);
+
+            const response = await axios.post("http://localhost:3000/upload/store", thumbnailData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            console.log(response.data); // Debugging line
+
+
+            setFormData(prev => ({ ...prev, thumbnailUrl: response.data.url }));
+        } catch (err) {
+            console.error("Error uploading thumbnail:", err);
+        }
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Here you would typically send this data to your backend or YouTube API
+        try {
+            let descriptionWithTags = formData.description; // Default to description only
+
+            if (formData.tags.trim().length > 0) {
+                const tags = formData.tags
+                    .split(",")
+                    .map(tag => tag.trim()) // Remove spaces around each tag
+                    .filter(tag => tag !== "") // Remove empty tags
+                    .map(tag => `#${tag}`) // Add '#' to each tag
+                    .join(" "); // Join with spaces
+
+                descriptionWithTags = `${formData.description}\n\n${tags}`.replace(/\n/g, "<br>");
+            }
+
+            const formDataToSend = {
+                videoPath: formData.videoUrl,
+                title: formData.title,
+                description: descriptionWithTags, // Ensure this is always defined
+                categoryId: formData.category,
+                privacyStatus: formData.visibility,
+                publishTime: formData.schedulePost
+                    ? `${formData.scheduleDate}T${formData.scheduleTime}:00Z`
+                    : null, // Use null instead of empty string
+                thumbnailPath: formData.thumbnailUrl,
+            };
+
+            const response = await axios.post("http://localhost:3000/youtube/upload", formDataToSend);
+
+            if (response.data.success) {
+                alert("Video posted successfully!");
+                console.log("Video URL:", response.data.videoUrl);
+            } else {
+                console.error("Server Error:", response.data);
+            }
+        } catch (err) {
+            console.error("Error submitting post:", err.response?.data || err.message);
+        }
     };
 
     return (
@@ -149,16 +226,39 @@ const Post = () => {
                                         onChange={handleInputChange}
                                     >
                                         <option value="">Select a category</option>
-                                        <option value="entertainment">Entertainment</option>
-                                        <option value="education">Education</option>
-                                        <option value="gaming">Gaming</option>
-                                        <option value="music">Music</option>
-                                        <option value="tech">Science & Technology</option>
-                                        <option value="travel">Travel & Events</option>
-                                        <option value="howto">How-to & Style</option>
+                                        <option value="1">Film & Animation</option>
+                                        <option value="2">Autos & Vehicles</option>
+                                        <option value="10">Music</option>
+                                        <option value="15">Pets & Animals</option>
+                                        <option value="17">Sports</option>
+                                        <option value="18">Short Movies</option>
+                                        <option value="19">Travel & Events</option>
+                                        <option value="20">Gaming</option>
+                                        <option value="21">Videoblogging</option>
+                                        <option value="22">People & Blogs</option>
+                                        <option value="23">Comedy</option>
+                                        <option value="24">Entertainment</option>
+                                        <option value="25">News & Politics</option>
+                                        <option value="26">How-to & Style</option>
+                                        <option value="27">Education</option>
+                                        <option value="28">Science & Technology</option>
+                                        <option value="30">Movies</option>
+                                        <option value="31">Anime/Animation</option>
+                                        <option value="32">Action/Adventure</option>
+                                        <option value="33">Classics</option>
+                                        <option value="34">Comedy (Film)</option>
+                                        <option value="35">Documentary</option>
+                                        <option value="36">Drama</option>
+                                        <option value="37">Family</option>
+                                        <option value="38">Foreign</option>
+                                        <option value="39">Horror</option>
+                                        <option value="40">Sci-Fi/Fantasy</option>
+                                        <option value="41">Thriller</option>
+                                        <option value="42">Shorts</option>
+                                        <option value="43">Shows</option>
+                                        <option value="44">Trailers</option>
                                     </select>
                                 </div>
-
                                 <div>
                                     <label htmlFor="visibility" className="block text-sm font-medium text-stone-600 mb-1">
                                         Visibility
