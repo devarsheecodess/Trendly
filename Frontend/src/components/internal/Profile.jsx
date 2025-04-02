@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const Profile = () => {
     const [isMobile, setIsMobile] = useState(false);
+    const [userId, setUserId] = useState(localStorage.getItem('userId'));
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
     useEffect(() => {
@@ -60,10 +61,44 @@ const Profile = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Process form submission here
-        console.log('Form data:', formData);
+
+        try {
+            const updateData = {
+                userId, // Include userId in the body instead of the query string
+                name: formData.name,
+                avatar: formData.avatar,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                country: formData.country,
+                channelName: formData.channelName,
+                contentNiche: formData.contentNiche,
+                ageGroups: Array.isArray(formData.ageGroups) ? formData.ageGroups : [],
+                audienceInterests: Array.isArray(formData.audienceInterests) ? formData.audienceInterests : [],
+            };
+
+            // Include password only if provided and matching
+            if (formData.password) {
+                if (formData.password !== formData.confirmPassword) {
+                    alert("Passwords do not match");
+                    return;
+                }
+                updateData.password = formData.password;
+            }
+
+            const response = await axios.put(`${BACKEND_URL}/user/update`, updateData);
+
+            if (response.status === 200) {
+                alert("Profile updated successfully");
+            } else {
+                alert("Failed to update profile");
+            }
+        } catch (err) {
+            console.error("Error updating profile:", err);
+            alert("An error occurred while updating your profile. Please try again.");
+        }
     };
 
     // Age group options
