@@ -46,7 +46,7 @@ const Dashboard = () => {
     const fetchUserContentData = async () => {
         try {
             console.log(id)
-            const response = await axios.get(`http://localhost:3000/dashboard/stats?id=${id}`);
+            const response = await axios.get(`${BACKEND_URL}/dashboard/stats?id=${id}`);
             if (response.data.success) {
                 setContentData({
                     voiceoverStats: { completed: response.data.data.voiceoverStats },
