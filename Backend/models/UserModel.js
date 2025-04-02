@@ -40,7 +40,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    googleTokens: { type: Object },
   },
   { timestamps: true }
 ); // Adds createdAt and updatedAt fields automatically

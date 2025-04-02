@@ -18,6 +18,7 @@ const YoutubeRoutes = require("./routes/mainRoutes/YoutubeRoute");
 const HistoryRoutes = require("./routes/HistoryRoutes");
 const OtpRoutes = require("./routes/OtpRoutes"); // Import OTP Routes
 const UploadVideoRoute = require("./routes/UploadVideoRoute"); // Import Video Upload Route
+const CloudinaryOps = require("./routes/CloudinaryOps"); // Import Cloudinary Operations
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use("/youtube", YoutubeRoutes);
 app.use("/history", HistoryRoutes);
 app.use("/otp", OtpRoutes); // Use OTP Routes
 app.use("/upload-video", UploadVideoRoute); // Use Video Upload Route
+app.use("/cloudinary", CloudinaryOps); // Use Cloudinary Operations
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {

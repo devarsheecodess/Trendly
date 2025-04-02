@@ -9,21 +9,7 @@ const History = () => {
     const [userId, setUserId] = useState(localStorage.getItem("userId"));
 
     // Sample data for demonstration
-    const [activities, setActivities] = useState({
-        scripts: [], voiceDubbings: [
-            { id: 1, title: "Product Review Narration", date: "Mar 14, 2025", duration: "4:32", voice: "Emma" },
-            { id: 2, title: "Tutorial Voice Over", date: "Mar 11, 2025", duration: "8:15", voice: "James" },
-            { id: 3, title: "Documentary Narration", date: "Mar 8, 2025", duration: "12:45", voice: "David" },], thumbnails: [
-                { id: 1, title: "Summer Vlog Thumbnail", date: "Mar 16, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
-                { id: 2, title: "Product Review Thumbnail", date: "Mar 13, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },
-                { id: 3, title: "Tutorial Series Thumbnail", date: "Mar 9, 2025", dimensions: "1280x720", previewUrl: "/api/placeholder/192/108" },], seoAnalyses: [
-                    { id: 1, title: "Gaming Channel Optimization", date: "Mar 15, 2025", score: 92, keywords: 14 },
-                    { id: 2, title: "Cooking Content Analysis", date: "Mar 12, 2025", score: 87, keywords: 18 },
-                    { id: 3, title: "Travel Vlog SEO Review", date: "Mar 8, 2025", score: 84, keywords: 12 },], youtubePosts: [
-                        { id: 1, title: "My Morning Routine 2025", date: "Mar 14, 2025", views: 4325, likes: 512, url: "youtu.be/abc123" },
-                        { id: 2, title: "Honest Review: Latest Tech", date: "Mar 10, 2025", views: 8761, likes: 943, url: "youtu.be/def456" },
-                        { id: 3, title: "How I Built My Home Studio", date: "Mar 6, 2025", views: 12453, likes: 1832, url: "youtu.be/ghi789" },]
-    });
+    const [activities, setActivities] = useState({ scripts: [], voiceDubbings: [], thumbnails: [], seoAnalyses: [], youtubePosts: [] });
 
     const handleExport = async (e, url, id) => {
         e.preventDefault();
