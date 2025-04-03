@@ -6,7 +6,7 @@ const router = express.Router();
 const path = require("path");
 const fs = require("fs").promises;
 
-const cloudinaryConfig = require("../../config/cloudinaryConfig");
+const cloudinaryConfig = require("../../config/cloudinaryConfig.js");
 cloudinary.config(cloudinaryConfig);
 
 router.post("/generate", async (req, res) => {
