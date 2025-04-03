@@ -1,13 +1,16 @@
 const express = require("express");
 const axios = require("axios");
 const FormData = require("form-data");
-const cloudinary = require("cloudinary").v2;
 const router = express.Router();
 const path = require("path");
 const fs = require("fs").promises;
+const { v2: cloudinary } = require("cloudinary");
 
-const cloudinaryConfig = require("../../config/cloudinaryConfig.js");
-cloudinary.config(cloudinaryConfig);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 router.post("/generate", async (req, res) => {
   const { prompt } = req.body;
