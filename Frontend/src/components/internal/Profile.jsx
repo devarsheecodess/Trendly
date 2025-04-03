@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const Profile = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [userId, setUserId] = useState(localStorage.getItem('userId'));
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    const fileInputRef = useRef(null);
+    const [imageLoading, setImageLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Add this function to handle image load events
+    const handleImageLoad = () => {
+        setImageLoading(false);
+    };
 
     useEffect(() => {
         const checkScreenSize = () => {
@@ -34,6 +42,9 @@ const Profile = () => {
         confirmPassword: '',
     });
 
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState('');
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -61,14 +72,29 @@ const Profile = () => {
         });
     };
 
+    const handlePhotoButtonClick = () => {
+        // Trigger the hidden file input click
+        fileInputRef.current.click();
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setAvatarFile(file);
+            // Create a preview URL
+            const previewUrl = URL.createObjectURL(file);
+            setAvatarPreview(previewUrl);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
 
         try {
             const updateData = {
                 userId, // Include userId in the body instead of the query string
                 name: formData.name,
-                avatar: formData.avatar,
                 email: formData.email,
                 phone: formData.phone,
                 address: formData.address,
@@ -88,10 +114,51 @@ const Profile = () => {
                 updateData.password = formData.password;
             }
 
+            // Handle avatar upload if there's a new file
+            if (avatarFile) {
+                const imageFormData = new FormData();
+                imageFormData.append('image', avatarFile);
+
+                const uploadResponse = await axios.post(`${BACKEND_URL}/upload/store`, imageFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+
+                // Set the new avatar URL in update data
+                updateData.avatar = uploadResponse.data.url;
+                localStorage.setItem('avatar', uploadResponse.data.url);
+
+                // Delete the old avatar from Cloudinary if it exists
+                if (formData.avatar) {
+                    try {
+                        await axios.delete(`${BACKEND_URL}/cloudinary/delete`, {
+                            data: { cloudinaryUrl: formData.avatar }
+                        });
+                    } catch (deleteErr) {
+                        console.error("Error deleting old avatar:", deleteErr);
+                        // Continue with update even if delete fails
+                    }
+                }
+            } else {
+                // Keep the existing avatar
+                updateData.avatar = formData.avatar;
+            }
+
             const response = await axios.put(`${BACKEND_URL}/user/update`, updateData);
 
             if (response.status === 200) {
+                setIsSaving(false);
                 alert("Profile updated successfully");
+                // Clean up preview URL
+                if (avatarPreview) {
+                    URL.revokeObjectURL(avatarPreview);
+                    setAvatarPreview('');
+                }
+                setAvatarFile(null);
+
+                // Refresh profile data
+                fetchProfileData();
             } else {
                 alert("Failed to update profile");
             }
@@ -113,17 +180,17 @@ const Profile = () => {
     const fetchProfileData = async () => {
         try {
             const response = await axios.get(`${BACKEND_URL}/user/profile?userId=${localStorage.getItem('userId')}`);
-            setFormData(response.data)
-            console.log(response.data)
+            setFormData(response.data);
+            console.log(response.data);
         } catch (err) {
-            console.log(err)
+            console.log(err);
         }
     }
 
     useEffect(() => {
-        console.log(BACKEND_URL)
-        fetchProfileData()
-    }, [])
+        console.log(BACKEND_URL);
+        fetchProfileData();
+    }, []);
 
     return (
         <div className={`${isMobile ? 'p-4' : 'ml-64 p-6'} bg-stone-50 min-h-screen`}>
@@ -315,23 +382,66 @@ const Profile = () => {
                             <h2 className="text-xl font-medium text-stone-700 mb-4">Profile Picture</h2>
 
                             <div className="flex flex-col items-center">
-                                {formData.avatar ? (
-                                    <div className="w-28 h-28 rounded-full mb-4 overflow-hidden">
-                                        <img
-                                            src={formData.avatar}
-                                            alt="Profile"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="w-28 h-28 bg-stone-200 rounded-full mb-4 flex items-center justify-center text-stone-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                    </div>
-                                )}
+                                <div className="w-28 h-28 rounded-full mb-4 overflow-hidden relative">
+                                    {avatarPreview ? (
+                                        <>
+                                            {imageLoading && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-stone-100">
+                                                    <svg className="animate-spin h-6 w-6 text-stone-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                </div>
+                                            )}
+                                            <img
+                                                src={avatarPreview}
+                                                alt="Profile Preview"
+                                                className="w-full h-full object-cover"
+                                                onLoad={handleImageLoad}
+                                                onError={() => setImageLoading(false)}
+                                            />
+                                        </>
+                                    ) : formData.avatar ? (
+                                        <>
+                                            {imageLoading && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-stone-100">
+                                                    <svg className="animate-spin h-6 w-6 text-stone-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                </div>
+                                            )}
+                                            <img
+                                                src={formData.avatar}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                                onLoad={handleImageLoad}
+                                                onError={() => setImageLoading(false)}
+                                            />
+                                        </>
+                                    ) : (
+                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center text-stone-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                </div>
 
-                                <button type="button" className="px-4 py-2 bg-stone-200 text-stone-700 rounded-md hover:bg-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-500">
+                                {/* Hidden file input */}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={handlePhotoButtonClick}
+                                    className="px-4 py-2 bg-stone-200 text-stone-700 rounded-md hover:bg-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-500"
+                                >
                                     Change Photo
                                 </button>
                             </div>
@@ -340,8 +450,22 @@ const Profile = () => {
 
                     {/* Submit Button */}
                     <div className="mt-6 flex justify-end">
-                        <button type="submit" className="px-6 py-2 bg-stone-700 text-white rounded-md hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-500">
-                            Save Changes
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="px-6 py-2 bg-stone-700 text-white rounded-md hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-500 flex items-center space-x-2"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                "Save Changes"
+                            )}
                         </button>
                     </div>
                 </form>

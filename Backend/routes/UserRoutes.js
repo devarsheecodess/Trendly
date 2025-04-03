@@ -2,6 +2,12 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/UserModel");
 const Onboarding = require("../models/OnbordingModel");
+const bcrypt = require("bcrypt");
+
+const hashPassword = async (password) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+};
 
 // Fetch user profile
 router.get("/profile", async (req, res) => {
@@ -54,6 +60,7 @@ router.put("/update", async (req, res) => {
     contentNiche,
     ageGroups,
     audienceInterests,
+    password,
   } = req.body;
 
   if (!userId) {
@@ -61,6 +68,7 @@ router.put("/update", async (req, res) => {
     return res.status(400).json({ message: "User ID is required." });
   }
 
+  // If password is provided, hash it and store in DB
   try {
     const [user, onboarding] = await Promise.all([
       User.findById(userId),
@@ -87,6 +95,10 @@ router.put("/update", async (req, res) => {
     user.contact = phone || user.contact;
     user.address = address || user.address;
     user.country = country || user.country;
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      user.password = hashedPassword;
+    }
     await user.save();
 
     // Update onboarding details
