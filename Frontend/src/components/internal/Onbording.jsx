@@ -8,6 +8,8 @@ const Onboarding = () => {
     const [profileImage, setProfileImage] = useState(null);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
+    const [userId, setUserId] = useState(localStorage.getItem('userId'));
+
     const [formData, setFormData] = useState({
         userId: localStorage.getItem('userId'),
         avatar: '',
@@ -52,8 +54,11 @@ const Onboarding = () => {
             setFormData(updatedFormData);
             console.log(updatedFormData);
 
-            await axios.post(`${BACKEND_URL}/auth/onboarding`, updatedFormData);
+            const response = await axios.post(`${BACKEND_URL}/auth/onboarding?userId=${userId}`, updatedFormData);
             alert("Welcome onboard!");
+            localStorage.setItem('username', response.data.username)
+            localStorage.setItem('youtube', response.data.youtube)
+            localStorage.setItem('avatar', response.data.avatar)
             window.location.href = '/dashboard';
         } catch (err) {
             console.log("Upload error:", err);

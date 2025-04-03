@@ -83,7 +83,24 @@ router.post("/onboarding", async (req, res) => {
   try {
     const newOnboarding = new Onboarding(data);
     await newOnboarding.save();
-    res.status(201).send({ success: true });
+
+    // fetch name and youtube channel name from user model
+    const user = await User.findOne({ _id: data.userId });
+    if (!user) {
+      return res
+        .status(404)
+        .send({ success: false, message: "User not found" });
+    }
+    const name = user.name;
+    const youtube = user.youtube;
+    res
+      .status(201)
+      .send({
+        success: true,
+        username: name,
+        youtube: youtube,
+        avatar: data.avatar,
+      });
   } catch (err) {
     console.log(err);
   }

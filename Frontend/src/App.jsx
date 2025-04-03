@@ -23,6 +23,7 @@ import Post from './components/internal/Post'
 import Profile from './components/internal/Profile'
 import History from './components/internal/History'
 import Verification from './components/auth/Verification'
+import GoogleSignupDetails from './components/auth/GoogleSignupDetails'
 
 const router = createBrowserRouter([
   {
@@ -46,13 +47,19 @@ const router = createBrowserRouter([
     </div>
   },
   {
+    path: '/oauth/details',
+    element: <div>
+      <GoogleSignupDetails />
+    </div>
+  },
+  {
     path: '/verify',
     element: <div>
       <Verification />
     </div>
   },
   {
-    path: '/onbording',
+    path: '/onboarding',
     element: <div>
       <Onbording />
     </div>

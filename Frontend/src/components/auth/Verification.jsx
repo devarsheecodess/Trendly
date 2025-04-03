@@ -84,7 +84,7 @@ const Verification = () => {
 
             if (response.data.success) {
                 alert("OTP verified successfully!");
-                window.location.href = '/onbording';
+                window.location.href = '/onboarding';
                 localStorage.removeItem('email');
             } else {
                 alert("Invalid OTP. Please try again.");

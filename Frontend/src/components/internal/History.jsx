@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarIcon, Clock, Film, FileText, Youtube, Image, Search, ChevronRight } from 'lucide-react';
+import { CalendarIcon, Clock, Film, FileText, Youtube, Image, Search, ChevronRight, Mic } from 'lucide-react';
 import DetailPopup from './DetailPopup';
 import axios from 'axios';
 
@@ -223,6 +223,16 @@ const History = () => {
                                     </div>
                                 </ActivityCard>
                             ))}
+
+                            {
+                                activities.scripts.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <FileText className="h-12 w-12 text-stone-300 mb-3" />
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No scripts found</p>
+                                        <p className="text-sm text-stone-400">Scripts you create will appear here</p>
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
 
@@ -261,6 +271,16 @@ const History = () => {
                                     </div>
                                 </ActivityCard>
                             ))}
+
+                            {
+                                activities.voiceDubbings.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Mic className="h-12 w-12 text-stone-300 mb-3" /> {/* Changed icon here */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No voiceovers found</p>
+                                        <p className="text-sm text-stone-400">Voiceovers you create will appear here</p>
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
 
@@ -306,6 +326,16 @@ const History = () => {
                                     </div>
                                 </ActivityCard>
                             ))}
+
+                            {
+                                activities.thumbnails.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Image className="h-12 w-12 text-stone-300 mb-3" /> {/* Changed icon here */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No thumbnails found</p>
+                                        <p className="text-sm text-stone-400">Thumbnails you create will appear here</p>
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
 
@@ -360,6 +390,16 @@ const History = () => {
                                     </div>
                                 </ActivityCard>
                             ))}
+
+                            {
+                                activities.seoAnalyses.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Search className="h-12 w-12 text-stone-300 mb-3" /> {/* Changed icon here */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No SEO Analysis found</p>
+                                        <p className="text-sm text-stone-400">SEO Analysis you do will appear here</p>
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
 
@@ -422,6 +462,16 @@ const History = () => {
                                     </div>
                                 </ActivityCard>
                             ))}
+
+                            {
+                                activities.youtubePosts.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Youtube className="h-12 w-12 text-stone-300 mb-3" /> {/* Changed icon here */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No YouTube videos found</p>
+                                        <p className="text-sm text-stone-400">Videos you post will appear here</p>
+                                    </div>
+                                )
+                            }
                         </div>
                     </div>
                 </div>
@@ -432,171 +482,173 @@ const History = () => {
             const renderItems = () => {
                 switch (activeTab) {
                     case "scripts":
-                        return tabData.map(script => (
-                            <ActivityCard key={script.id} className="flex flex-col h-full">
-                                <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{script.title}</h3>
-                                    <div className="flex justify-between text-sm text-stone-500">
-                                        <span>
-                                            {new Date(script.createdAt).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600"></span>
-                                    <button
-                                        className="text-sm text-stone-600 hover:text-stone-800"
-                                        onClick={() => openDetailPopup('script', script)}
-                                    >
-                                        View
-                                    </button>
-                                </div>
-                            </ActivityCard>
-                        ));
-                    case "voiceDubbings":
-                        return tabData.map(dubbing => (
-                            <ActivityCard key={dubbing.id} className="flex flex-col h-full">
-                                <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{dubbing.title}</h3>
-                                    <div className="flex justify-between text-sm text-stone-500">
-                                        <span>
-                                            {new Date(dubbing.createdAt).toLocaleString("en-GB", {
-                                                day: "2-digit",
-                                                month: "long",
-                                                year: "numeric"
-                                            })}
-                                        </span>
-                                        <span>{dubbing.duration}</span>
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600">Voice: {dubbing.voice}</span>
-                                    <button onClick={(e) => playvoiceover(e, dubbing.voiceover)} className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
-                                        <Clock className="h-4 w-4 mr-1" /> Play
-                                    </button>
-                                </div>
-                            </ActivityCard>
-                        ));
-                    case "thumbnails":
-                        return tabData.map(thumbnail => (
-                            <ActivityCard key={thumbnail.id} className="flex flex-col h-full">
-                                <div className="relative overflow-hidden" style={{ paddingTop: "56.25%" }}>
-                                    <img
-                                        src={thumbnail.thumbnail}
-                                        alt={thumbnail.title}
-                                        className="absolute top-0 left-0 w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{thumbnail.title}</h3>
-                                    <div className="flex justify-between text-sm text-stone-500">
-                                        <span>
-                                            {new Date(thumbnail.createdAt).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <span className="text-sm text-stone-600"></span>
-                                    <button onClick={(e) => handleExport(e, thumbnail.thumbnail, thumbnail._id)} className="text-sm text-stone-600 hover:text-stone-800">Download</button>
-                                </div>
-                            </ActivityCard>
-                        ));
-                    case "seoAnalyses":
-                        return tabData.map(seo => (
-                            <ActivityCard key={seo.id} className="flex flex-col h-full">
-                                <div className="p-4 flex-grow">
-                                    <h3 className="font-medium text-stone-800 mb-2">{seo.optimizedTitle}</h3>
-                                    <div className="flex justify-between text-sm text-stone-500">
-                                        <span>
-                                            {new Date(seo.createdAt).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </span>
-                                        <span>{seo.primaryKeywords.length} keywords</span>
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
-                                    <div className="flex items-center">
-                                        <div className="h-2 w-16 bg-stone-200 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${seo.titleScore > 75
-                                                    ? "bg-green-500"
-                                                    : seo.titleScore > 50
-                                                        ? "bg-yellow-500"
-                                                        : "bg-red-500"
-                                                    }`}
-                                                style={{ width: `${seo.titleScore}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="text-sm text-stone-600 ml-2">{seo.titleScore}%</span>
-                                    </div>
-                                    <button
-                                        className="text-sm text-stone-600 hover:text-stone-800"
-                                        onClick={() => openDetailPopup('seo', seo)}
-                                    >
-                                        Details
-                                    </button>
-                                </div>
-                            </ActivityCard>
-                        ));
-                    case "youtubePosts":
-                        return tabData.map(post => (
-                            <ActivityCard key={post.id} className="flex flex-col h-full">
-                                <div className="p-4">
-                                    <div className="flex space-x-4">
-                                        {/* Square thumbnail */}
-                                        <div className="flex-shrink-0">
-                                            <img
-                                                src={post.thumbnail}
-                                                alt={post.title}
-                                                className="w-16 h-16 object-cover rounded-md"
-                                            />
-                                        </div>
-
-                                        {/* Title and date */}
-                                        <div className="flex-grow min-w-0">
-                                            <h3 className="font-medium text-stone-800 mb-2 truncate">{post.title}</h3>
-                                            <div className="text-sm text-stone-500">
-                                                <span>{new Date(post.createdAt).toLocaleDateString("en-GB", {
-                                                    day: "numeric",
-                                                    month: "long",
-                                                    year: "numeric"
-                                                })}</span>
+                        return (
+                            <>
+                                {tabData.map(script => (
+                                    <ActivityCard key={script.id} className="flex flex-col h-full">
+                                        <div className="p-4 flex-grow">
+                                            <h3 className="font-medium text-stone-800 mb-2">{script.title}</h3>
+                                            <div className="flex justify-between text-sm text-stone-500">
+                                                <span>
+                                                    {new Date(script.createdAt).toLocaleDateString("en-GB", {
+                                                        day: "2-digit",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
+                                        <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
+                                            <span className="text-sm text-stone-600"></span>
+                                            <button
+                                                className="text-sm text-stone-600 hover:text-stone-800"
+                                                onClick={() => openDetailPopup('script', script)}
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    </ActivityCard>
+                                ))}
 
-                                    {/* Description or additional content can go here */}
-                                    <div className="mt-4 text-sm text-stone-600 line-clamp-2">
-                                        {post.description || "Watch this video on YouTube"}
+                                {/* Show "No scripts found" message only when there are no scripts */}
+                                {activities.scripts.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <FileText className="h-12 w-12 text-stone-300 mb-3" />
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No scripts found</p>
+                                        <p className="text-sm text-stone-400">Scripts you create will appear here</p>
                                     </div>
-                                </div>
+                                )}
+                            </>
+                        );
+                    case "voiceDubbings":
+                        return (
+                            <>
+                                {tabData.map(dubbing => (
+                                    <ActivityCard key={dubbing.id} className="flex flex-col h-full">
+                                        <div className="p-4 flex-grow">
+                                            <h3 className="font-medium text-stone-800 mb-2">{dubbing.title}</h3>
+                                            <div className="flex justify-between text-sm text-stone-500">
+                                                <span>{new Date(dubbing.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                                                <span>{dubbing.duration}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
+                                            <span className="text-sm text-stone-600">Voice: {dubbing.voice}</span>
+                                            <button onClick={(e) => playvoiceover(e, dubbing.voiceover)} className="text-sm text-stone-600 hover:text-stone-800 flex items-center">
+                                                <Clock className="h-4 w-4 mr-1" /> Play
+                                            </button>
+                                        </div>
+                                    </ActivityCard>
+                                ))}
 
-                                <div className="bg-stone-50 px-4 py-3 border-t border-stone-100 flex justify-between items-center">
-                                    <a
-                                        href={post.video}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
-                                    >
-                                        <span>Watch on YouTube</span>
-                                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </ActivityCard>
-                        ));
+                                {tabData.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Mic className="h-12 w-12 text-stone-300 mb-3" />  {/* 🎙️ Microphone Icon */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No voiceovers found</p>
+                                        <p className="text-sm text-stone-400">Voiceovers you create will appear here</p>
+                                    </div>
+                                )}
+                            </>
+                        );
+
+                    case "thumbnails":
+                        return (
+                            <>
+                                {tabData.map(thumbnail => (
+                                    <ActivityCard key={thumbnail.id} className="flex flex-col h-full">
+                                        <div className="relative overflow-hidden" style={{ paddingTop: "56.25%" }}>
+                                            <img src={thumbnail.thumbnail} alt={thumbnail.title} className="absolute top-0 left-0 w-full h-full object-cover" />
+                                        </div>
+                                        <div className="p-4 flex-grow">
+                                            <h3 className="font-medium text-stone-800 mb-2">{thumbnail.title}</h3>
+                                            <div className="flex justify-between text-sm text-stone-500">
+                                                <span>{new Date(thumbnail.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
+                                            <button onClick={(e) => handleExport(e, thumbnail.thumbnail, thumbnail._id)} className="text-sm text-stone-600 hover:text-stone-800">Download</button>
+                                        </div>
+                                    </ActivityCard>
+                                ))}
+
+                                {tabData.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Image className="h-12 w-12 text-stone-300 mb-3" />  {/* 🖼️ Image Icon */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No thumbnails found</p>
+                                        <p className="text-sm text-stone-400">Thumbnails you create will appear here</p>
+                                    </div>
+                                )}
+                            </>
+                        );
+
+                    case "seoAnalyses":
+                        return (
+                            <>
+                                {tabData.map(seo => (
+                                    <ActivityCard key={seo.id} className="flex flex-col h-full">
+                                        <div className="p-4 flex-grow">
+                                            <h3 className="font-medium text-stone-800 mb-2">{seo.optimizedTitle}</h3>
+                                            <div className="flex justify-between text-sm text-stone-500">
+                                                <span>{new Date(seo.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                                                <span>{seo.primaryKeywords.length} keywords</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-stone-50 px-4 py-2 border-t border-stone-100 flex justify-between items-center">
+                                            <div className="flex items-center">
+                                                <div className="h-2 w-16 bg-stone-200 rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${seo.titleScore > 75 ? "bg-green-500" : seo.titleScore > 50 ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${seo.titleScore}%` }}></div>
+                                                </div>
+                                                <span className="text-sm text-stone-600 ml-2">{seo.titleScore}%</span>
+                                            </div>
+                                            <button className="text-sm text-stone-600 hover:text-stone-800" onClick={() => openDetailPopup('seo', seo)}>Details</button>
+                                        </div>
+                                    </ActivityCard>
+                                ))}
+
+                                {tabData.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Search className="h-12 w-12 text-stone-300 mb-3" />
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No SEO Analysis found</p>
+                                        <p className="text-sm text-stone-400">SEO Analysis you do will appear here</p>
+                                    </div>
+                                )}
+                            </>
+                        );
+
+                    case "youtubePosts":
+                        return (
+                            <>
+                                {tabData.map(post => (
+                                    <ActivityCard key={post.id} className="flex flex-col h-full">
+                                        <div className="p-4">
+                                            <div className="flex space-x-4">
+                                                <div className="flex-shrink-0">
+                                                    <img src={post.thumbnail} alt={post.title} className="w-16 h-16 object-cover rounded-md" />
+                                                </div>
+                                                <div className="flex-grow min-w-0">
+                                                    <h3 className="font-medium text-stone-800 mb-2 truncate">{post.title}</h3>
+                                                    <div className="text-sm text-stone-500">
+                                                        <span>{new Date(post.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-4 text-sm text-stone-600 line-clamp-2">{post.description || "Watch this video on YouTube"}</div>
+                                        </div>
+                                        <div className="bg-stone-50 px-4 py-3 border-t border-stone-100 flex justify-between items-center">
+                                            <a href={post.video} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center">Watch on YouTube</a>
+                                        </div>
+                                    </ActivityCard>
+                                ))}
+
+                                {tabData.length === 0 && (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 py-12 flex flex-col items-center justify-center text-center bg-stone-50 rounded-lg border border-dashed border-stone-200">
+                                        <Youtube className="h-12 w-12 text-stone-300 mb-3" />  {/* 🎥 Video Icon */}
+                                        <p className="text-lg font-medium text-stone-500 mb-1">No YouTube posts found</p>
+                                        <p className="text-sm text-stone-400">Your YouTube posts will appear here</p>
+                                    </div>
+                                )}
+                            </>
+                        );
                     default:
                         return <p>No data available.</p>;
                 }

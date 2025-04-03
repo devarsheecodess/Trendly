@@ -5,8 +5,11 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
 
 router.use(cookieParser());
+
+let googleFlag = false;
 
 const FRONTEND_URL = process.env.FRONTEND_URL; // Replace with your frontend URL
 const User = require("../models/UserModel");
@@ -45,8 +48,16 @@ passport.use(
         if (existingUser) {
           return cb(null, existingUser);
         } else {
-          // If no user is found, return an error
-          return cb(new Error("Email address not found"));
+          // Create a new user if the email doesn't exist
+          const newUser = new User({
+            email: profile.emails[0].value,
+            name: profile.displayName,
+          });
+
+          googleFlag = true; // Set the flag to true for new users
+
+          const savedUser = await newUser.save();
+          return cb(null, savedUser);
         }
       } catch (err) {
         // Handle error and return it to the callback
@@ -62,7 +73,7 @@ passport.serializeUser((user, cb) => {
 
 passport.deserializeUser(async (id, cb) => {
   try {
-    const user = await User.find({ _id: id });
+    const user = await User.findById(id);
     cb(null, user);
   } catch (err) {
     cb(err);
@@ -86,11 +97,17 @@ router.get(
         res.cookie("userName", user.name);
         res.cookie("userId", user.id);
 
-        // Redirect to your frontend
-        res.redirect(`${FRONTEND_URL}/dashboard`);
+        // Check if this is a new user (created via Google auth)
+        if (googleFlag) {
+          // Redirect new users to the details form
+          res.redirect(`${FRONTEND_URL}/oauth/details?email=${user.email}`);
+        } else {
+          // Redirect existing users to dashboard
+          res.redirect(`${FRONTEND_URL}/dashboard`);
+        }
       } else {
         // If no user is found, render a page with an alert
-        res.render("auth", { message: "Email address not found" });
+        res.render("auth", { message: "Authentication failed" });
       }
     } catch (err) {
       console.error(err);
@@ -109,6 +126,42 @@ router.get("/user/logout", function (req, res, next) {
     res.clearCookie("userId");
     res.json({ success: true });
   });
+});
+
+router.put("/userinfo", async (req, res) => {
+  const { data } = req.body;
+
+  try {
+    const user = await User.findOne({ email: data.email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.contact = data.contact;
+    user.address = data.address;
+    user.country = data.country;
+    user.youtube = data.youtube;
+    user.username = data.username;
+
+    if (data.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(data.password, salt);
+    }
+
+    await user.save();
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "User info updated successfully",
+        userId: user._id,
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error. Please try again later." });
+  }
 });
 
 module.exports = router;

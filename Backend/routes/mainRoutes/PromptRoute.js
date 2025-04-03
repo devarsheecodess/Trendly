@@ -67,8 +67,10 @@ router.get("/trending_topics", async (req, res) => {
       country: userData.country,
     };
 
+    const year = new Date().getFullYear();
+
     const prompt = `
-     I am a youtuber. Generate 5 trending topics for my channel and give me responses in JSON format:
+     I am a youtuber. Generate 5 trending topics of year ${year} for my channel and give me responses in JSON format:
      {
      "topic": the topic name, 
      "popularity": the popularity of the topic(0 to 100%),

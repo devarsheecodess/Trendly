@@ -251,6 +251,14 @@ const Dashboard = () => {
                                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-stone-500">{project.date}</td>
                                                 </tr>
                                             ))}
+
+                                            {
+                                                contentData.recentProjects.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="3" className="px-4 py-3 text-center text-sm text-stone-500">No recent projects found.</td>
+                                                    </tr>
+                                                )
+                                            }
                                         </tbody>
                                     </table>
                                 </div>
