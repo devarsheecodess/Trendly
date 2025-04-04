@@ -5,6 +5,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const app = express();
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -25,7 +26,6 @@ const UploadVideoRoute = require("./routes/UploadVideoRoute"); // Import Video U
 const CloudinaryOps = require("./routes/CloudinaryOps"); // Import Cloudinary Operations
 const DashboardRoute = require("./routes/mainRoutes/DashboardRoute"); // Import Dashboard Route
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware for JSON handling
