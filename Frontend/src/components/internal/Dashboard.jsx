@@ -117,7 +117,7 @@ const Dashboard = () => {
             };
             localStorage.setItem('userId', userData.userId);
             fetchChannelName(userData.userId);
-            localStorage.setItem('avatar', userData.avatar);
+            fetchAvatar(userData.userId);
             localStorage.setItem('username', userData.userName);
             setId(userData.userId);
             window.location.href = '/dashboard';
