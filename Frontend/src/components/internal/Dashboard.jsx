@@ -113,10 +113,11 @@ const Dashboard = () => {
             const userData = {
                 userName: decodeURIComponent(urlParams.get("userName")),
                 userId: urlParams.get("userId"),
+                avatar: decodeURIComponent(urlParams.get("avatar"))
             };
             localStorage.setItem('userId', userData.userId);
             fetchChannelName(userData.userId);
-            fetchAvatar(userData.userId);
+            localStorage.setItem('avatar', userData.avatar);
             localStorage.setItem('username', userData.userName);
             setId(userData.userId);
             window.location.href = '/dashboard';

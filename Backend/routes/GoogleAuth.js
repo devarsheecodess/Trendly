@@ -105,7 +105,7 @@ router.get(
           res.redirect(
             `${FRONTEND_URL}/dashboard?` +
               `userName=${encodeURIComponent(user.name)}&` +
-              `userId=${user.id}`
+              `userId=${user.id}&avatar=${user.avatar}`
           );
         }
       } else {
