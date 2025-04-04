@@ -95,15 +95,13 @@ router.get(
       if (user) {
         // Successful login logic
         res.cookie("userName", user.name, {
-          domain: process.env.BACKEND_URL, // Backend domain
           path: "/",
           httpOnly: true,
-          secure: true, // Mandatory for cross-site cookies
-          sameSite: "None", // Required for cross-domain cookies
+          secure: true, // Required for HTTPS
+          sameSite: "None", // Required for cross-site cookies
         });
 
         res.cookie("userId", user.id, {
-          domain: process.env.BACKEND_URL,
           path: "/",
           httpOnly: true,
           secure: true,
