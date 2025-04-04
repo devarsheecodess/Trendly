@@ -95,19 +95,6 @@ router.get(
       const user = req.user;
       if (user) {
         // Successful login logic
-        res.cookie("userName", user.name, {
-          path: "/",
-          httpOnly: false, // Optional: Allow frontend access if needed
-          secure: process.env.NODE_ENV === "production", // Use true only in production
-          sameSite: "None", // Required for cross-origin requests
-        });
-
-        res.cookie("userId", user.id, {
-          path: "/",
-          httpOnly: true, // Keep this true for security
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "None",
-        });
 
         // Check if this is a new user (created via Google auth)
         if (googleFlag) {
@@ -115,7 +102,11 @@ router.get(
           res.redirect(`${FRONTEND_URL}/oauth/details?email=${user.email}`);
         } else {
           // Redirect existing users to dashboard
-          res.redirect(`${FRONTEND_URL}/dashboard`);
+          res.redirect(
+            `${FRONTEND_URL}/dashboard` +
+              `userName=${encodeURIComponent(user.name)}&` +
+              `userId=${user.id}`
+          );
         }
       } else {
         // If no user is found, render a page with an alert

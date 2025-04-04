@@ -108,11 +108,16 @@ const Dashboard = () => {
         fetchTrendingTopics();
 
         if (google && !id) {
-            localStorage.setItem('userId', userId);
-            fetchChannelName(userId);
-            const username = getCookieValue("userName");
-            localStorage.setItem('username', username);
-            setId(userId);
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const userData = {
+                userName: decodeURIComponent(urlParams.get("userName")),
+                userId: urlParams.get("userId"),
+            };
+            localStorage.setItem('userId', userData.userId);
+            fetchChannelName(userData.userId);
+            localStorage.setItem('username', userData.userName);
+            setId(userData.userId);
         }
 
         // Check if viewport is mobile
