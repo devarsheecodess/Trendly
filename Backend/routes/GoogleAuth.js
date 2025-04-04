@@ -103,7 +103,7 @@ router.get(
         } else {
           // Redirect existing users to dashboard
           res.redirect(
-            `${FRONTEND_URL}/dashboard` +
+            `${FRONTEND_URL}/dashboard?` +
               `userName=${encodeURIComponent(user.name)}&` +
               `userId=${user.id}`
           );
