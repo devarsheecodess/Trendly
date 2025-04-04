@@ -96,10 +96,10 @@ router.get(
         // Successful login logic
         res.cookie("userName", user.name, {
           path: "/",
-          httpOnly: false, // ❌ Set to false if frontend needs to access it
-          secure: true,
-          sameSite: "None",
-          domain: ".trendly-ai.vercel.app", // ✅ Match frontend domain
+          httpOnly: false, // ❌ Allow frontend to access it (Optional)
+          secure: true, // ✅ Required for HTTPS
+          sameSite: "None", // ✅ Needed for cross-site requests
+          domain: "trendly-ai.vercel.app", // ❌ Remove the dot prefix
         });
 
         res.cookie("userId", user.id, {
@@ -107,7 +107,7 @@ router.get(
           httpOnly: true, // ✅ Keep true for security
           secure: true,
           sameSite: "None",
-          domain: ".trendly-ai.vercel.app",
+          domain: "trendly-ai.vercel.app", // ❌ Remove the dot prefix
         });
 
         // Check if this is a new user (created via Google auth)
