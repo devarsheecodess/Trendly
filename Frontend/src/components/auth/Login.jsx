@@ -53,9 +53,9 @@ const LoginForm = () => {
     }
 
     const handleGoogleLogin = async () => {
-        localStorage.setItem("google", true)
-        window.location.href = `${BACKEND_URL}/oauth/user/login/google`;
-    }
+        localStorage.setItem("google", true);
+        window.open(`${BACKEND_URL}/oauth/user/login/google`, "_self");
+    };
 
     return (
         <form className="space-y-4">

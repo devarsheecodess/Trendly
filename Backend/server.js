@@ -42,6 +42,8 @@ app.use(cookieParser()); // ✅ This must come before your routes
 // Initialize Passport Middleware
 app.use(passport.initialize());
 
+app.set("trust proxy", 1);
+
 // Routes
 app.use("/auth", authRoutes);
 app.use("/oauth", googleAuthRoutes); // Improved route structure
@@ -58,8 +60,6 @@ app.use("/otp", OtpRoutes); // Use OTP Routes
 app.use("/upload-video", UploadVideoRoute); // Use Video Upload Route
 app.use("/cloudinary", CloudinaryOps); // Use Cloudinary Operations
 app.use("/dashboard", DashboardRoute); // Use Dashboard Route
-
-app.set("trust proxy", 1);
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {
