@@ -17,12 +17,13 @@ const User = require("../models/UserModel");
 // Session setup
 router.use(
   session({
-    secret: process.env.EXPRESS_SESSION_SECRET, // Replace with a unique key
-    resave: false, // Avoid resaving unchanged sessions
-    saveUninitialized: false, // Only save sessions with initialized data
+    secret: process.env.EXPRESS_SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-      secure: false, // Set to true in production if using HTTPS
+      secure: process.env.NODE_ENV === "production", // Use true only in production
       httpOnly: true,
+      sameSite: "None", // Required for cross-origin requests
       maxAge: 60 * 60 * 1000, // Session expires after 1 hour
     },
   })
@@ -96,18 +97,16 @@ router.get(
         // Successful login logic
         res.cookie("userName", user.name, {
           path: "/",
-          httpOnly: false, // ❌ Allow frontend to access it (Optional)
-          secure: true, // ✅ Required for HTTPS
-          sameSite: "None", // ✅ Needed for cross-site requests
-          domain: "trendly-ai.vercel.app", // ❌ Remove the dot prefix
+          httpOnly: false, // Optional: Allow frontend access if needed
+          secure: process.env.NODE_ENV === "production", // Use true only in production
+          sameSite: "None", // Required for cross-origin requests
         });
 
         res.cookie("userId", user.id, {
           path: "/",
-          httpOnly: true, // ✅ Keep true for security
-          secure: true,
+          httpOnly: true, // Keep this true for security
+          secure: process.env.NODE_ENV === "production",
           sameSite: "None",
-          domain: "trendly-ai.vercel.app", // ❌ Remove the dot prefix
         });
 
         // Check if this is a new user (created via Google auth)
