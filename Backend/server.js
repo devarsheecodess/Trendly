@@ -4,6 +4,10 @@ const passport = require("passport");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
+const path = require("path");
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 const authRoutes = require("./routes/AuthRoutes");
 const googleAuthRoutes = require("./routes/GoogleAuth");
