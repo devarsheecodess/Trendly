@@ -94,8 +94,21 @@ router.get(
       const user = req.user;
       if (user) {
         // Successful login logic
-        res.cookie("userName", user.name);
-        res.cookie("userId", user.id);
+        res.cookie("userName", user.name, {
+          domain: process.env.BACKEND_URL, // Backend domain
+          path: "/",
+          httpOnly: true,
+          secure: true, // Mandatory for cross-site cookies
+          sameSite: "None", // Required for cross-domain cookies
+        });
+
+        res.cookie("userId", user.id, {
+          domain: process.env.BACKEND_URL,
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+        });
 
         // Check if this is a new user (created via Google auth)
         if (googleFlag) {
@@ -151,13 +164,11 @@ router.put("/userinfo", async (req, res) => {
 
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "User info updated successfully",
-        userId: user._id,
-      });
+    res.status(200).json({
+      success: true,
+      message: "User info updated successfully",
+      userId: user._id,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error. Please try again later." });

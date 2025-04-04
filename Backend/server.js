@@ -27,7 +27,12 @@ const PORT = process.env.PORT || 3000;
 // Middleware for JSON handling
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For form data
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL, // Replace with actual frontend domain
+    credentials: true, // Allow cookies to be sent
+  })
+);
 app.use(cookieParser()); // ✅ This must come before your routes
 
 // Initialize Passport Middleware
@@ -49,6 +54,8 @@ app.use("/otp", OtpRoutes); // Use OTP Routes
 app.use("/upload-video", UploadVideoRoute); // Use Video Upload Route
 app.use("/cloudinary", CloudinaryOps); // Use Cloudinary Operations
 app.use("/dashboard", DashboardRoute); // Use Dashboard Route
+
+app.set("trust proxy", 1);
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {
