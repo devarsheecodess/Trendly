@@ -120,7 +120,6 @@ const Dashboard = () => {
             fetchAvatar(userData.userId);
             localStorage.setItem('username', userData.userName);
             setId(userData.userId);
-            window.location.href = '/dashboard';
         }
 
         // Check if viewport is mobile
