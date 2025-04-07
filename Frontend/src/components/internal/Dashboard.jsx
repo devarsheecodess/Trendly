@@ -102,11 +102,6 @@ const Dashboard = () => {
     }
 
     useEffect(() => {
-        const userId = getCookieValue("userId");
-        fetchAvatar(userId);
-        fetchUserContentData();
-        fetchTrendingTopics();
-
         if (google && !id) {
             const urlParams = new URLSearchParams(window.location.search);
 
@@ -121,6 +116,10 @@ const Dashboard = () => {
             localStorage.setItem('username', userData.userName);
             setId(userData.userId);
         }
+
+        fetchAvatar(id);
+        fetchUserContentData();
+        fetchTrendingTopics();
 
         // Check if viewport is mobile
         const checkMobile = () => {
