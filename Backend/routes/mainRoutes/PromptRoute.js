@@ -1,75 +1,80 @@
 const express = require("express");
 const router = express.Router();
 const {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
+	GoogleGenerativeAI,
+	HarmCategory,
+	HarmBlockThreshold,
 } = require("@google/generative-ai");
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+	model: "gemini-1.5-flash",
 });
 
 const generationConfig = {
-  temperature: 2,
-  topP: 0.95,
-  topK: 40,
-  maxOutputTokens: 2000,
-  responseMimeType: "text/plain",
+	temperature: 2,
+	topP: 0.95,
+	topK: 40,
+	maxOutputTokens: 2000,
+	responseMimeType: "text/plain",
 };
 
 const OnboardingModel = require("../../models/OnbordingModel");
 const UserModel = require("../../models/UserModel");
+const { resolveUserId } = require("../authHelpers");
 
 router.post("/generate", async (req, res) => {
-  const { prompt } = req.body;
+	const { prompt } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required." });
-  }
+	if (!prompt) {
+		return res.status(400).json({ error: "Prompt is required." });
+	}
 
-  try {
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [],
-    });
+	try {
+		const chatSession = model.startChat({
+			generationConfig,
+			history: [],
+		});
 
-    const result = await chatSession.sendMessage(prompt);
-    res.json({ response: result.response.text() });
-  } catch (error) {
-    console.error("Error generating response:", error);
-    res.status(500).json({ error: "Failed to generate response." });
-  }
+		const result = await chatSession.sendMessage(prompt);
+		res.json({ response: result.response.text() });
+	} catch (error) {
+		console.error("Error generating response:", error);
+		res.status(500).json({ error: "Failed to generate response." });
+	}
 });
 
 router.get("/trending_topics", async (req, res) => {
-  const id = req.query.id;
-  try {
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [],
-    });
+	const id = await resolveUserId(req);
+	try {
+		const chatSession = model.startChat({
+			generationConfig,
+			history: [],
+		});
 
-    const onboardingData = await OnboardingModel.findOne({ userId: id });
-    const userData = await UserModel.findOne({ _id: id });
+		let onboardingData = null;
+		let userData = null;
+		if (id) {
+			onboardingData = await OnboardingModel.findOne({ userId: id });
+			userData = await UserModel.findById(id);
+		}
 
-    const data = {
-      about: onboardingData.about,
-      subscribers: onboardingData.subscribers,
-      contentType: onboardingData.contentType,
-      contentNiche: onboardingData.contentNiche,
-      ageGroups: onboardingData.ageGroups,
-      audienceInterests: onboardingData.audienceInterests,
-      audienceDetails: onboardingData.audienceDetails,
-      country: userData.country,
-    };
+		const data = {
+			about: (onboardingData && onboardingData.about) || "",
+			subscribers: (onboardingData && onboardingData.subscribers) || "",
+			contentType: (onboardingData && onboardingData.contentType) || "",
+			contentNiche: (onboardingData && onboardingData.contentNiche) || "",
+			ageGroups: (onboardingData && onboardingData.ageGroups) || "",
+			audienceInterests: (onboardingData && onboardingData.audienceInterests) || "",
+			audienceDetails: (onboardingData && onboardingData.audienceDetails) || "",
+			country: (userData && userData.country) || "",
+		};
 
-    const year = new Date().getFullYear();
+		const year = new Date().getFullYear();
 
-    const prompt = `
+		const prompt = `
      I am a youtuber. Generate 5 trending topics of year ${year} for my channel and give me responses in JSON format:
      {
      "topic": the topic name, 
@@ -87,11 +92,11 @@ router.get("/trending_topics", async (req, res) => {
       8. I live in Country: ${data.country} (country code)
     `;
 
-    const result = await chatSession.sendMessage(prompt);
-    res.json({ response: result.response.text() });
-  } catch (err) {
-    console.log(err);
-  }
+		const result = await chatSession.sendMessage(prompt);
+		res.json({ response: result.response.text() });
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 module.exports = router;
