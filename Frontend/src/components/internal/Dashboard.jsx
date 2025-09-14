@@ -105,8 +105,8 @@ const Dashboard = () => {
 		const fetchCurrentUser = async () => {
 			if (!id) {
 				try {
-					const res = await fetch(`${BACKEND_URL}/oauth/me`, { credentials: 'include' });
-					const data = await res.json();
+					const res = await axios.get(`${BACKEND_URL}/oauth/me`);
+					const data = res.data;
 					if (data.success && data.user && data.user.userId) {
 						const userId = data.user.userId;
 						setId(userId);

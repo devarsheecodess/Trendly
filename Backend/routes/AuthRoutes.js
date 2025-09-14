@@ -41,18 +41,12 @@ router.post("/signup", async (req, res) => {
 		data.password = hashedPassword;
 		const newuser = new User(data);
 		await newuser.save();
-		// sign jwt and set cookie
+		// sign jwt and return it so frontend can store in localStorage
 		const payload = { id: newuser._id, name: newuser.name, email: newuser.email };
 		const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
-		const isProd = process.env.NODE_ENV === 'production';
-		res.cookie("token", token, {
-			httpOnly: true,
-			secure: isProd,
-			sameSite: isProd ? 'None' : 'Lax',
-			maxAge: 7 * 24 * 60 * 60 * 1000,
-		});
 		res.status(201).send({
 			success: true,
+			token,
 			userId: newuser._id,
 			name: newuser.name,
 			youtube: newuser.youtube,
@@ -75,18 +69,12 @@ router.post("/login", async (req, res) => {
 
 		const isMatch = await bcrypt.compare(password, user.password);
 		if (isMatch) {
-			// sign jwt and set cookie
+			// sign jwt and return it so frontend can store in localStorage
 			const payload = { id: user._id, name: user.name, email: user.email };
 			const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
-			const isProd = process.env.NODE_ENV === 'production';
-			res.cookie("token", token, {
-				httpOnly: true,
-				secure: isProd,
-				sameSite: isProd ? 'None' : 'Lax',
-				maxAge: 7 * 24 * 60 * 60 * 1000,
-			});
 			res.status(200).send({
 				success: true,
+				token,
 				userId: user._id,
 				name: user.name,
 				youtube: user.youtube,

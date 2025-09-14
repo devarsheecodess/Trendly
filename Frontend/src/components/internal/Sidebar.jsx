@@ -65,7 +65,12 @@ const Sidebar = () => {
 	const handleLogout = async () => {
 		const cf = confirm('Are you sure you want to logout?');
 		if (!cf) return;
-		localStorage.clear()
+		// Clear auth token and cached profile
+		localStorage.removeItem('token');
+		localStorage.removeItem('userId');
+		localStorage.removeItem('username');
+		localStorage.removeItem('avatar');
+		delete axios.defaults.headers.common['Authorization'];
 		// Try to logout from backend if cookie-based session exists
 		try {
 			const me = await axios.get(`${BACKEND_URL}/oauth/me`, { withCredentials: true });

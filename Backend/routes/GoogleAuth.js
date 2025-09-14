@@ -70,19 +70,13 @@ router.get("/user/login/google/callback", passport.initialize(), (req, res, next
 			const payload = { id: user._id, name: user.name, email: user.email };
 			const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 
-			// Set cookie - use Lax for local development (so browsers accept cookies on localhost)
-			const isProd = process.env.NODE_ENV === 'production';
-			res.cookie("token", token, {
-				httpOnly: true,
-				secure: isProd,
-				sameSite: isProd ? 'None' : 'Lax',
-				maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-			});
-
+			// For environments where cookies are not desired (e.g., Render without shared domain),
+			// return token to frontend via URL fragment so frontend can store it in localStorage.
+			// Note: fragment is not sent to the server so token will only be visible to browser JS.
 			if (user.isNewUser) {
-				return res.redirect(`${FRONTEND_URL}/oauth/details`);
+				return res.redirect(`${FRONTEND_URL}/oauth/details#token=${token}&new=1`);
 			} else {
-				return res.redirect(`${FRONTEND_URL}/dashboard`);
+				return res.redirect(`${FRONTEND_URL}/dashboard#token=${token}`);
 			}
 		} catch (e) {
 			console.error('Callback handler error:', e);
@@ -93,8 +87,7 @@ router.get("/user/login/google/callback", passport.initialize(), (req, res, next
 
 // Logout - clear the JWT cookie
 router.get("/user/logout", function (req, res) {
-	const isProd = process.env.NODE_ENV === 'production';
-	res.clearCookie("token", { httpOnly: true, sameSite: isProd ? 'None' : 'Lax', secure: isProd });
+	// For token-in-localstorage flow, frontend should simply remove the token locally
 	res.json({ success: true });
 });
 
