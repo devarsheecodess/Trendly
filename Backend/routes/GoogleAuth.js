@@ -129,7 +129,15 @@ router.put("/userinfo", async (req, res) => {
 // Public endpoint: return current user info based on JWT cookie
 router.get("/me", async (req, res) => {
 	try {
-		const token = req.cookies && req.cookies.token;
+		// Support token from Authorization header (Bearer) or cookie for compatibility.
+		let token;
+		const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
+		if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+			token = authHeader.split(' ')[1];
+		} else {
+			token = req.cookies && req.cookies.token;
+		}
+
 		if (!token) return res.status(401).json({ success: false, message: "No token" });
 
 		const decoded = jwt.verify(token, JWT_SECRET);
