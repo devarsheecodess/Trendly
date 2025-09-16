@@ -8,7 +8,7 @@ const Agent = () => {
 			id: 1,
 			text: "Hello! I'm your AI agent. How can I help you today?",
 			sender: 'agent',
-			timestamp: new Date()
+			createdAt: new Date()
 		}
 	]);
 	const [inputMessage, setInputMessage] = useState('');
@@ -16,18 +16,30 @@ const Agent = () => {
 	const [isTyping, setIsTyping] = useState(false);
 	const [userAvatar, setUserAvatar] = useState('');
 	const [activeChat, setActiveChat] = useState(1);
-	const [recentChats] = useState([
-		{ id: 1, title: "Content Creation Help", preview: "Hello! I'm your AI agent...", timestamp: new Date(), active: true },
-		{ id: 2, title: "Marketing Strategy", preview: "Can you help me with social media...", timestamp: new Date(Date.now() - 86400000), active: false },
-		{ id: 3, title: "Script Writing", preview: "I need help writing a video script...", timestamp: new Date(Date.now() - 172800000), active: false },
-		{ id: 4, title: "SEO Optimization", preview: "How can I improve my website's SEO...", timestamp: new Date(Date.now() - 259200000), active: false },
-		{ id: 5, title: "Thumbnail Ideas", preview: "What makes a good YouTube thumbnail...", timestamp: new Date(Date.now() - 345600000), active: false }
-	]);
+	const [recentChats, setRecentChats] = useState([]);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [newTitle, setNewTitle] = useState('');
+	const [newDesc, setNewDesc] = useState('');
+	const [creatingChat, setCreatingChat] = useState(false);
+	const [createError, setCreateError] = useState('');
 	const messagesEndRef = useRef(null);
 	const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	};
+
+	const fetchRecentChats = async () => {
+		const token = localStorage.getItem('token');
+		try {
+			const response = await axios.get(`${BACKEND_URL}/agent/list`, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			setRecentChats(response.data)
+		} catch (error) {
+			console.error('Error fetching recent chats:', error);
+		}
 	};
 
 	useEffect(() => {
@@ -39,6 +51,7 @@ const Agent = () => {
 		if (storedAvatar) {
 			setUserAvatar(storedAvatar);
 		}
+		fetchRecentChats()
 	}, []);
 
 	const handleSendMessage = () => {
@@ -50,7 +63,7 @@ const Agent = () => {
 			id: Date.now(),
 			text: inputMessage,
 			sender: 'user',
-			timestamp: new Date()
+			createdAt: new Date()
 		};
 
 		setMessages(prev => [...prev, newMessage]);
@@ -69,7 +82,7 @@ const Agent = () => {
 					id: Date.now() + 1,
 					text,
 					sender: 'agent',
-					timestamp: new Date()
+					createdAt: new Date()
 				};
 				console.log(res)
 				setMessages(prev => [...prev, agentResponse]);
@@ -80,7 +93,7 @@ const Agent = () => {
 					id: Date.now() + 1,
 					text: 'Sorry, something went wrong. Please try again.',
 					sender: 'agent',
-					timestamp: new Date()
+					createdAt: new Date()
 				};
 				setMessages(prev => [...prev, agentResponse]);
 			})
@@ -104,6 +117,36 @@ const Agent = () => {
 		}
 	};
 
+	const createChat = async () => {
+		if (!newTitle.trim()) {
+			setCreateError('Title is required');
+			return;
+		}
+		setCreateError('');
+		setCreatingChat(true);
+		const token = localStorage.getItem('token');
+		try {
+			const res = await axios.post(`${BACKEND_URL}/agent/create`, {
+				sessionName: newTitle,
+				description: newDesc
+			}, {
+				headers: { Authorization: token ? `Bearer ${token}` : '' }
+			});
+			const created = res.data;
+			// Prepend to recent chats and set active
+			setActiveChat(created._id || created.id || created._doc?._id || 1);
+			setIsModalOpen(false);
+			setNewTitle('');
+			setNewDesc('');
+			fetchRecentChats();
+		} catch (err) {
+			console.error('Create chat error', err?.response || err);
+			setCreateError('Failed to create chat');
+		} finally {
+			setCreatingChat(false);
+		}
+	};
+
 	const formatTime = (date) => {
 		return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	};
@@ -121,11 +164,12 @@ const Agent = () => {
 					<div className="flex flex-col bg-white shadow-xl border border-stone-200/50 rounded-2xl w-80 overflow-hidden">
 						{/* Sidebar Header */}
 						<div className="p-4 border-stone-200/50 border-b">
-							<button className="flex justify-center items-center space-x-2 bg-stone-700 hover:bg-stone-800 shadow-md hover:shadow-lg px-4 py-3 rounded-xl w-full text-white transition-all duration-200">
+							<button onClick={() => setIsModalOpen(true)} className="flex justify-center items-center space-x-2 bg-stone-700 hover:bg-stone-800 shadow-md hover:shadow-lg px-4 py-3 rounded-xl w-full text-white transition-all duration-200">
 								<Plus className="w-4 h-4" />
 								<span className="font-medium">New Chat</span>
 							</button>
 						</div>
+
 
 						{/* Search Bar */}
 						<div className="p-4 border-stone-200/50 border-b">
@@ -134,19 +178,43 @@ const Agent = () => {
 								<input
 									type="text"
 									placeholder="Search chats..."
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
 									className="bg-stone-50 py-2 pr-4 pl-10 border border-stone-300 focus:border-stone-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500/50 w-full text-sm"
 								/>
 							</div>
 						</div>
 
+						{/* Create Chat Modal */}
+						{isModalOpen && (
+							<div className="z-50 fixed inset-0 flex justify-center items-center bg-black/40">
+								<div className="bg-white shadow-2xl p-6 rounded-xl w-full max-w-md">
+									<h3 className="mb-3 font-semibold text-lg">Create New Chat</h3>
+									<label className="block mb-1 text-stone-700 text-sm">Title</label>
+									<input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mb-3 p-3 border border-stone-200 rounded-lg w-full" placeholder="e.g., Content Planning" />
+									<label className="block mb-1 text-stone-700 text-sm">Description</label>
+									<textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="mb-4 p-3 border border-stone-200 rounded-lg w-full" rows={3} placeholder="Short description for this session" />
+									<div className="flex justify-end items-center space-x-3">
+										<button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border border-stone-200 rounded-lg">Cancel</button>
+										<button onClick={createChat} disabled={creatingChat} className="bg-stone-700 disabled:opacity-60 px-4 py-2 rounded-lg text-white">{creatingChat ? 'Creating...' : 'Create'}</button>
+									</div>
+									{createError && <p className="mt-3 text-red-600">{createError}</p>}
+								</div>
+							</div>
+						)}
+
 						{/* Recent Chats List */}
 						<div className="flex-1 overflow-y-auto">
 							<div className="p-2">
-								{recentChats.map((chat) => (
+								{(recentChats || []).filter(chat => {
+									if (!searchQuery.trim()) return true;
+									const q = searchQuery.toLowerCase();
+									return (chat.sessionName || '').toLowerCase().includes(q) || (chat.description || '').toLowerCase().includes(q);
+								}).map((chat) => (
 									<div
-										key={chat.id}
-										onClick={() => setActiveChat(chat.id)}
-										className={`p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2 ${activeChat === chat.id
+										key={chat._id || chat.id}
+										onClick={() => setActiveChat(chat._id || chat.id)}
+										className={`p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2 ${(activeChat === (chat._id || chat.id))
 											? 'bg-stone-100 border-l-4 border-stone-600'
 											: 'hover:bg-stone-50'
 											}`}
@@ -156,27 +224,32 @@ const Agent = () => {
 												<MessageSquare className="w-4 h-4 text-white" />
 											</div>
 											<div className="flex-1 min-w-0">
-												<h3 className={`font-medium text-sm truncate ${activeChat === chat.id ? 'text-stone-800' : 'text-stone-800'
+												<h3 className={`font-medium text-sm truncate ${(activeChat === (chat._id || chat.id)) ? 'text-stone-800' : 'text-stone-800'
 													}`}>
-													{chat.title}
+													{chat.sessionName}
 												</h3>
 												<p className="mt-1 text-stone-500 text-xs truncate">
-													{chat.preview}
+													{chat.description}
 												</p>
 												<p className="mt-1 text-stone-400 text-xs">
-													{chat.timestamp.toLocaleDateString()}
+													{new Date(chat.createdAt).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
 												</p>
 											</div>
 										</div>
 									</div>
 								))}
+
+								{
+									(!recentChats || recentChats.length === 0) && (
+										<p className="mt-6 text-stone-500 text-sm text-center">No recent chats</p>
+									)
+								}
 							</div>
 						</div>
 					</div>
 
 					{/* Chat Container */}
 					<div className="flex flex-col flex-1 bg-white shadow-2xl backdrop-blur-sm border border-stone-200/50 rounded-3xl overflow-hidden">
-
 						{/* Messages Area */}
 						<div className="flex-1 space-y-6 bg-gradient-to-b from-white via-stone-50/30 to-white p-6 overflow-y-auto">
 							{messages.map((message) => (
@@ -213,7 +286,7 @@ const Agent = () => {
 											<p className="font-medium text-sm leading-relaxed">{message.text}</p>
 											<p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-stone-300' : 'text-stone-500'
 												}`}>
-												{formatTime(message.timestamp)}
+												{formatTime(message.createdAt)}
 											</p>
 										</div>
 									</div>
