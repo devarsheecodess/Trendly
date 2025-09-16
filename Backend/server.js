@@ -32,10 +32,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For form data
 app.use(
-  cors({
-    origin: process.env.FRONTEND_URL, // Replace with actual frontend domain
-    credentials: true, // Allow cookies to be sent
-  })
+	cors({
+		origin: process.env.FRONTEND_URL, // Replace with actual frontend domain
+		credentials: true, // Allow cookies to be sent
+	})
 );
 app.use(cookieParser()); // ✅ This must come before your routes
 
@@ -60,32 +60,33 @@ app.use("/otp", OtpRoutes); // Use OTP Routes
 app.use("/upload-video", UploadVideoRoute); // Use Video Upload Route
 app.use("/cloudinary", CloudinaryOps); // Use Cloudinary Operations
 app.use("/dashboard", DashboardRoute); // Use Dashboard Route
+app.use("/agent", require("./routes/mainRoutes/AgentRoutes")); // Use Agent Routes
 
 // 404 Middleware - Handles unmatched routes
 app.use((req, res) => {
-  res.status(404).send({ success: false, message: "Route not found" });
+	res.status(404).send({ success: false, message: "Route not found" });
 });
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send({ success: false, message: "Something went wrong!" });
+	console.error(err.stack);
+	res.status(500).send({ success: false, message: "Something went wrong!" });
 });
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB", err);
-  });
+	.connect(process.env.MONGO_URI, {
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	})
+	.then(() => {
+		console.log("Connected to MongoDB");
+	})
+	.catch((err) => {
+		console.error("Error connecting to MongoDB", err);
+	});
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+	console.log(`Server running on http://localhost:${PORT}`);
 });
