@@ -24,113 +24,121 @@ import Profile from './components/internal/Profile'
 import History from './components/internal/History'
 import Verification from './components/auth/Verification'
 import GoogleSignupDetails from './components/auth/GoogleSignupDetails'
+import Agent from './components/internal/Agent'
 
 const router = createBrowserRouter([
-  {
-    path: '*',
-    element: <div>
-      <ErrorPage />
-    </div>
-  },
-  {
-    path: '/',
-    element: <div className='bg-stone-800'>
-      <Header />
-      <Landing />
-      <Footer />
-    </div>
-  },
-  {
-    path: '/auth',
-    element: <div>
-      <Auth />
-    </div>
-  },
-  {
-    path: '/oauth/details',
-    element: <div>
-      <GoogleSignupDetails />
-    </div>
-  },
-  {
-    path: '/verify',
-    element: <div>
-      <Verification />
-    </div>
-  },
-  {
-    path: '/onboarding',
-    element: <div>
-      <Onbording />
-    </div>
-  },
-  {
-    path: '/dashboard',
-    element: <div>
-      <Sidebar />
-      <Dashboard />
-    </div>
-  },
-  {
-    path: '/script',
-    element: <div>
-      <Sidebar />
-      <ScriptWritting />
-    </div>
-  },
-  {
-    path: '/voiceover',
-    element: <div>
-      <Sidebar />
-      <VoiceOver />
-    </div>
-  },
-  {
-    path: '/thumbnail',
-    element: <div>
-      <Sidebar />
-      <Thumbnail />
-    </div>
-  },
-  {
-    path: '/seo',
-    element: <div>
-      <Sidebar />
-      <SEO />
-    </div>
-  },
-  {
-    path: '/post',
-    element: <div>
-      <Sidebar />
-      <Post />
-    </div>
-  },
-  {
-    path: '/profile',
-    element: <div>
-      <Sidebar />
-      <Profile />
-    </div>
-  },
-  {
-    path: '/history',
-    element: <div>
-      <Sidebar />
-      <History />
-    </div>
-  },
+	{
+		path: '*',
+		element: <div>
+			<ErrorPage />
+		</div>
+	},
+	{
+		path: '/',
+		element: <div className='bg-stone-800'>
+			<Header />
+			<Landing />
+			<Footer />
+		</div>
+	},
+	{
+		path: '/auth',
+		element: <div>
+			<Auth />
+		</div>
+	},
+	{
+		path: '/oauth/details',
+		element: <div>
+			<GoogleSignupDetails />
+		</div>
+	},
+	{
+		path: '/verify',
+		element: <div>
+			<Verification />
+		</div>
+	},
+	{
+		path: '/onboarding',
+		element: <div>
+			<Onbording />
+		</div>
+	},
+	{
+		path: '/dashboard',
+		element: <div>
+			<Sidebar />
+			<Dashboard />
+		</div>
+	},
+	{
+		path: '/script',
+		element: <div>
+			<Sidebar />
+			<ScriptWritting />
+		</div>
+	},
+	{
+		path: '/voiceover',
+		element: <div>
+			<Sidebar />
+			<VoiceOver />
+		</div>
+	},
+	{
+		path: '/thumbnail',
+		element: <div>
+			<Sidebar />
+			<Thumbnail />
+		</div>
+	},
+	{
+		path: '/seo',
+		element: <div>
+			<Sidebar />
+			<SEO />
+		</div>
+	},
+	{
+		path: '/post',
+		element: <div>
+			<Sidebar />
+			<Post />
+		</div>
+	},
+	{
+		path: '/agent',
+		element: <div>
+			<Sidebar />
+			<Agent />
+		</div>
+	},
+	{
+		path: '/profile',
+		element: <div>
+			<Sidebar />
+			<Profile />
+		</div>
+	},
+	{
+		path: '/history',
+		element: <div>
+			<Sidebar />
+			<History />
+		</div>
+	},
 ])
 
 
 function App() {
-  const [count, setCount] = useState(0)
+	const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <RouterProvider router={router} />
-    </>
-  )
+	return (
+		<>
+			<RouterProvider router={router} />
+		</>
+	)
 }
 
 export default App

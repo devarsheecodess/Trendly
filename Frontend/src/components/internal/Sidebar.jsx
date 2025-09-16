@@ -1,5 +1,6 @@
-import { LogOut } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import * as Icons from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
 import SidebarPic from '../../assets/sidebar.png'
@@ -84,13 +85,14 @@ const Sidebar = () => {
 	}
 
 	const menuItems = [
-		{ id: 0, name: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', path: '/dashboard' },
-		{ id: 1, name: 'Script Writing', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', path: '/script' },
-		{ id: 2, name: 'Voice Over', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', path: '/voiceover' },
-		{ id: 3, name: 'Thumbnail', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', path: '/thumbnail' },
-		{ id: 4, name: 'SEO Analyzer', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', path: '/seo' },
-		{ id: 5, name: 'Post', icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8', path: '/post' },
-		{ id: 6, name: 'History', icon: 'M12 8v4l3 3m6-3A9 9 0 1 1 12 3a9 9 0 0 1 9 9z', path: '/history' }
+		{ id: 0, name: 'Dashboard', icon: 'Home', path: '/dashboard' },
+		{ id: 1, name: 'Script Writing', icon: 'FileText', path: '/script' },
+		{ id: 2, name: 'Voice Over', icon: 'Mic', path: '/voiceover' },
+		{ id: 3, name: 'Thumbnail', icon: 'Image', path: '/thumbnail' },
+		{ id: 4, name: 'SEO Analyzer', icon: 'TrendingUp', path: '/seo' },
+		{ id: 5, name: 'Post', icon: 'File', path: '/post' },
+		{ id: 6, name: 'Agent', icon: 'Bot', path: '/agent' },
+		{ id: 7, name: 'History', icon: 'History', path: '/history' }
 	];
 
 	return (
@@ -129,9 +131,10 @@ const Sidebar = () => {
 						>
 							{({ isActive }) => (
 								<>
-									<svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isActive ? 'text-stone-800' : 'text-stone-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-									</svg>
+									{(() => {
+										const Icon = Icons[item.icon] || Icons.File;
+										return <Icon className={`h-5 w-5 ${isActive ? 'text-stone-800' : 'text-stone-500'}`} />;
+									})()}
 									<span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>
 										{item.name}
 									</span>
